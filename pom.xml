@@ -20,8 +20,8 @@
         </developer>
     </developers>
     <scm>
-        <url>https://github.com/wjtree/dubbo-parent</url>
-        <connection>scm:git@github.com:wjtree/dubbo-parent.git</connection>
+        <url>https://github.com/wjtree/dubbo-boot-parent</url>
+        <connection>scm:git@github.com:wjtree/dubbo-boot-parent.git</connection>
     </scm>
     <modules>
         <module>mould-core</module>
@@ -34,19 +34,21 @@
         <!-- Custom properties -->
         <file.encoding>UTF-8</file.encoding>
         <java.version>1.8</java.version>
+        <skip_maven_surefire>true</skip_maven_surefire>
+        <argLine>-Dfile.encoding=${file.encoding}</argLine>
+        <!-- Maven properties -->
         <project.build.sourceEncoding>${file.encoding}</project.build.sourceEncoding>
         <project.reporting.outputEncoding>${file.encoding}</project.reporting.outputEncoding>
-        <argLine>-Dfile.encoding=${file.encoding}</argLine>
-        <skip_maven_surefire>true</skip_maven_surefire>
         <!-- Dependency versions -->
         <spring-boot.version>2.0.0.RELEASE</spring-boot.version>
-        <dubbo.version>2.6.0</dubbo.version>
-        <javassist.version>3.22.0-GA</javassist.version>
-        <netty-all.version>4.1.22.Final</netty-all.version>
-        <netty.version>3.10.6.Final</netty.version>
+        <mybatis-spring-boot.version>1.3.2</mybatis-spring-boot.version>
+        <druid-spring-boot.version>1.1.9</druid-spring-boot.version>
+        <dubbo-spring-boot.version>0.1.0</dubbo-spring-boot.version>
         <zookeeper.version>3.4.11</zookeeper.version>
-        <curator.version>4.0.1</curator.version>
         <guava.version>24.0-jre</guava.version>
+        <fastjson.version>1.2.47</fastjson.version>
+        <!-- Plugin versions -->
+        <mybatis-generator-plugin.version>1.3.6</mybatis-generator-plugin.version>
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -58,48 +60,24 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-            <!-- Dubbo -->
+            <dependency>
+                <groupId>org.mybatis.spring.boot</groupId>
+                <artifactId>mybatis-spring-boot-starter</artifactId>
+                <version>${mybatis-spring-boot.version}</version>
+            </dependency>
             <dependency>
                 <groupId>com.alibaba</groupId>
-                <artifactId>dubbo</artifactId>
-                <version>${dubbo.version}</version>
+                <artifactId>druid-spring-boot-starter</artifactId>
+                <version>${druid-spring-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.alibaba.boot</groupId>
+                <artifactId>dubbo-spring-boot-starter</artifactId>
+                <version>${dubbo-spring-boot.version}</version>
                 <exclusions>
                     <exclusion>
                         <artifactId>netty</artifactId>
                         <groupId>org.jboss.netty</groupId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <!-- javassist -->
-            <dependency>
-                <groupId>org.javassist</groupId>
-                <artifactId>javassist</artifactId>
-                <version>${javassist.version}</version>
-            </dependency>
-            <!-- netty -->
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty</artifactId>
-                <version>${netty.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-all</artifactId>
-                <version>${netty-all.version}</version>
-            </dependency>
-            <!-- zookeeper -->
-            <dependency>
-                <groupId>org.apache.zookeeper</groupId>
-                <artifactId>zookeeper</artifactId>
-                <version>${zookeeper.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <artifactId>slf4j-api</artifactId>
-                        <groupId>org.slf4j</groupId>
-                    </exclusion>
-                    <exclusion>
-                        <artifactId>slf4j-log4j12</artifactId>
-                        <groupId>org.slf4j</groupId>
                     </exclusion>
                     <exclusion>
                         <artifactId>log4j</artifactId>
@@ -107,20 +85,11 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+            <!-- Zookeeper -->
             <dependency>
-                <groupId>org.apache.curator</groupId>
-                <artifactId>curator-framework</artifactId>
-                <version>${curator.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <artifactId>slf4j-api</artifactId>
-                        <groupId>org.slf4j</groupId>
-                    </exclusion>
-                    <exclusion>
-                        <artifactId>guava</artifactId>
-                        <groupId>com.google.guava</groupId>
-                    </exclusion>
-                </exclusions>
+                <groupId>org.apache.zookeeper</groupId>
+                <artifactId>zookeeper</artifactId>
+                <version>${zookeeper.version}</version>
             </dependency>
             <!-- Guava -->
             <dependency>
@@ -150,6 +119,12 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+            <!-- JSON -->
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>fastjson</artifactId>
+                <version>${fastjson.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
     <dependencies>
@@ -161,6 +136,18 @@
         </dependency>
     </dependencies>
     <build>
+        <resources>
+            <resource>
+                <filtering>false</filtering>
+                <directory>src/main/resources</directory>
+                <!-- 剔除下如下配置中包含的资源类型 -->
+                <excludes>
+                    <exclude>**/profile/**</exclude>
+                    <exclude>**/assembly.xml</exclude>
+                    <exclude>**/generatorConfig.xml</exclude>
+                </excludes>
+            </resource>
+        </resources>
         <pluginManagement>
             <plugins>
                 <!-- Maven Compiler -->
@@ -170,6 +157,13 @@
                         <encoding>${file.encoding}</encoding>
                         <source>${java.version}</source>
                         <target>${java.version}</target>
+                    </configuration>
+                </plugin>
+                <!-- Maven Resources -->
+                <plugin>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <configuration>
+                        <encoding>${file.encoding}</encoding>
                     </configuration>
                 </plugin>
                 <!-- Maven Surefire -->
@@ -250,6 +244,28 @@
                             <checkModificationExclude>.settings</checkModificationExclude>
                         </checkModificationExcludes>
                     </configuration>
+                </plugin>
+                <!-- Mybatis Generator -->
+                <plugin>
+                    <groupId>org.mybatis.generator</groupId>
+                    <artifactId>mybatis-generator-maven-plugin</artifactId>
+                    <version>${mybatis-generator-plugin.version}</version>
+                    <configuration>
+                        <overwrite>true</overwrite>
+                        <verbose>true</verbose>
+                    </configuration>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.mariadb.jdbc</groupId>
+                            <artifactId>mariadb-java-client</artifactId>
+                            <version>2.2.2</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>mysql</groupId>
+                            <artifactId>mysql-connector-java</artifactId>
+                            <version>5.1.45</version>
+                        </dependency>
+                    </dependencies>
                 </plugin>
             </plugins>
         </pluginManagement>
