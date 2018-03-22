@@ -1,6 +1,6 @@
 package com.app.data.job;
 
-import com.app.core.util.RabbitMQUtil;
+import com.app.core.util.RabbitUtil;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
@@ -32,7 +32,8 @@ public class DemoJob extends QuartzJobBean {
         // 将改变后的参数值存入作业上下文
         dataMap.put("date", afterDate);
 
-        RabbitMQUtil.send(afterDate);
+        // 发送 RabbitMQ 消息
+        RabbitUtil.send(afterDate);
 
         if (log.isInfoEnabled())
             log.info("{} 执行 {} 定时任务完成，改变前日期：{}，改变后日期：{}", DateTime.now().toString("yyyy-MM-dd HH:mm:ss.SSS"), jobKey, beforeDate, afterDate);

@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 
 @Log4j2
 @Component
-public class RabbitMQUtil {
+public class RabbitUtil {
     /**
      * RabbitMQ消息发送和接收模板
      */
@@ -15,7 +15,7 @@ public class RabbitMQUtil {
 
     @Autowired
     public void setTemplate(RabbitTemplate template) {
-        RabbitMQUtil.template = template;
+        RabbitUtil.template = template;
     }
 
     /**

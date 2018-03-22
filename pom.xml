@@ -45,10 +45,12 @@
         <druid-spring-boot.version>1.1.9</druid-spring-boot.version>
         <dubbo-spring-boot.version>0.1.0</dubbo-spring-boot.version>
         <dubbo.version>2.6.0</dubbo.version>
+        <javassist.version>3.22.0-GA</javassist.version>
         <zookeeper.version>3.4.11</zookeeper.version>
         <jjwt.version>0.9.0</jjwt.version>
         <springfox.version>2.8.0</springfox.version>
         <memcached.version>3.0.2</memcached.version>
+        <commons-io.version>2.6</commons-io.version>
         <guava.version>24.0-jre</guava.version>
         <fastjson.version>1.2.47</fastjson.version>
         <!-- Plugin versions -->
@@ -95,6 +97,12 @@
                 <artifactId>dubbo</artifactId>
                 <version>${dubbo.version}</version>
             </dependency>
+            <!-- javassist -->
+            <dependency>
+                <groupId>org.javassist</groupId>
+                <artifactId>javassist</artifactId>
+                <version>${javassist.version}</version>
+            </dependency>
             <!-- Zookeeper -->
             <dependency>
                 <groupId>org.apache.zookeeper</groupId>
@@ -123,6 +131,12 @@
                 <groupId>com.whalin</groupId>
                 <artifactId>Memcached-Java-Client</artifactId>
                 <version>${memcached.version}</version>
+            </dependency>
+            <!-- Apache Commons -->
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>${commons-io.version}</version>
             </dependency>
             <!-- Guava -->
             <dependency>
