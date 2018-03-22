@@ -1,10 +1,11 @@
 package com.app.data.job;
 
-import com.app.core.util.RabbitUtil;
+import com.app.core.util.IocUtil;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.quartz.*;
+import org.springframework.jms.core.JmsTemplate;
 import org.springframework.scheduling.quartz.QuartzJobBean;
 
 /**
@@ -33,7 +34,8 @@ public class DemoJob extends QuartzJobBean {
         dataMap.put("date", afterDate);
 
         // 发送 RabbitMQ 消息
-        RabbitUtil.send(afterDate);
+//        RabbitUtil.send(afterDate);
+        IocUtil.getBean(JmsTemplate.class).convertAndSend("hi,activeMQ");
 
         if (log.isInfoEnabled())
             log.info("{} 执行 {} 定时任务完成，改变前日期：{}，改变后日期：{}", DateTime.now().toString("yyyy-MM-dd HH:mm:ss.SSS"), jobKey, beforeDate, afterDate);
