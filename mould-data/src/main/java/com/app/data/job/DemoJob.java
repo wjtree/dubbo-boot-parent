@@ -35,7 +35,7 @@ public class DemoJob extends QuartzJobBean {
 
         // 发送 RabbitMQ 消息
 //        RabbitUtil.send(afterDate);
-        IocUtil.getBean(JmsTemplate.class).convertAndSend("hi,activeMQ");
+        IocUtil.getBean("jmsTopicTemplate", JmsTemplate.class).convertAndSend("hi,activeMQ");
 
         if (log.isInfoEnabled())
             log.info("{} 执行 {} 定时任务完成，改变前日期：{}，改变后日期：{}", DateTime.now().toString("yyyy-MM-dd HH:mm:ss.SSS"), jobKey, beforeDate, afterDate);
