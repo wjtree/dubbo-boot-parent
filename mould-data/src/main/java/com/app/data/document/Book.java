@@ -1,8 +1,8 @@
 package com.app.data.document;
 
-import com.app.core.BaseMongoCollection;
+import com.app.core.base.BaseDocument;
 
-public class Book extends BaseMongoCollection {
+public class Book extends BaseDocument {
     private String name;
 
     private String pwd;

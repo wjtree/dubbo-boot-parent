@@ -1,6 +1,6 @@
 package com.app.core.util;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.data.redis.core.*;
 
 import java.util.Collection;
@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-//@Component
+@Log4j2
 public class RedisUtil {
     /**
      * Spring Redis 基础操作模板
@@ -36,14 +36,8 @@ public class RedisUtil {
      */
     private static ZSetOperations<String, String> zSetOps;
 
-    /**
-     * 初始化模版
-     *
-     * @param redisTemp StringRedisTemplate
-     */
-    @Autowired
-    public void setRedisTemp(StringRedisTemplate redisTemp) {
-        RedisUtil.redisTemp = redisTemp;
+    static {
+        RedisUtil.redisTemp = IocUtil.getBean(StringRedisTemplate.class);
         // 初始化各个数据类型模版
         RedisUtil.valueOps = redisTemp.opsForValue();
         RedisUtil.hashOps = redisTemp.opsForHash();

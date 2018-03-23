@@ -1,9 +1,11 @@
-package com.app.server.config;
+package com.app.data.config;
 
-import org.springframework.amqp.core.*;
+import org.springframework.amqp.core.Binding;
+import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.DirectExchange;
+import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.amqp.rabbit.listener.DirectMessageListenerContainer;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Bean;
@@ -11,7 +13,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 
 @Configuration
-public class RabbitConfig {
+public class RabbitMQConfig {
     @Bean
     public Queue queue() {
         return new Queue("queue.sz");
@@ -37,14 +39,5 @@ public class RabbitConfig {
         template.setEncoding("UTF-8");
         template.setMessageConverter(new Jackson2JsonMessageConverter());
         return template;
-    }
-
-    @Bean
-    public DirectMessageListenerContainer directMessageListenerContainer(ConnectionFactory connectionFactory) {
-        DirectMessageListenerContainer container = new DirectMessageListenerContainer();
-        container.setConnectionFactory(connectionFactory);
-        container.setMessageConverter(new Jackson2JsonMessageConverter());
-        container.setAcknowledgeMode(AcknowledgeMode.AUTO);
-        return container;
     }
 }

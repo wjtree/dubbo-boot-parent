@@ -1,44 +1,53 @@
 package com.app.server.config;
 
-import org.apache.activemq.command.ActiveMQQueue;
-import org.apache.activemq.command.ActiveMQTopic;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jms.config.DefaultJmsListenerContainerFactory;
 import org.springframework.jms.core.JmsTemplate;
 
 import javax.jms.ConnectionFactory;
-import javax.jms.Queue;
-import javax.jms.Topic;
+import javax.jms.Session;
 
 @Configuration
 public class ActiveMQConfig {
-    @Bean
-    public Queue queue() {
-        return new ActiveMQQueue("queue.sh");
-    }
-
-    @Bean
-    public Topic activeMQQueue() {
-        return new ActiveMQTopic("topic.sh");
-    }
-
-    @Bean("jmsTopicTemplate")
-    public JmsTemplate jmsTopicTemplate(ConnectionFactory connectionFactory) {
+    @Bean("topicTemplate")
+    public JmsTemplate topicTemplate(ConnectionFactory connectionFactory) {
         JmsTemplate template = new JmsTemplate();
         template.setConnectionFactory(connectionFactory);
-        template.setPubSubDomain(true);
         template.setSessionTransacted(true);
+        template.setPubSubDomain(true);
         template.setDefaultDestinationName("topic.sh");
         return template;
     }
 
-    @Bean("jmsQueueTemplate")
-    public JmsTemplate jmsQueueTemplate(ConnectionFactory connectionFactory) {
+    @Bean("queueTemplate")
+    public JmsTemplate queueTemplate(ConnectionFactory connectionFactory) {
         JmsTemplate template = new JmsTemplate();
         template.setConnectionFactory(connectionFactory);
-        template.setPubSubDomain(false);
         template.setSessionTransacted(true);
+        template.setPubSubDomain(false);
         template.setDefaultDestinationName("queue.sh");
         return template;
+    }
+
+    @Bean("topicContainer")
+    public DefaultJmsListenerContainerFactory topicContainer(ConnectionFactory connectionFactory) {
+        DefaultJmsListenerContainerFactory factory = new DefaultJmsListenerContainerFactory();
+        factory.setConnectionFactory(connectionFactory);
+        // 事务控制（开启后会显著影响消费者性能），默认为false，超过重发次数（缺省为6次）后会发送到死信队列，默认为ActiveMQ.DLQ
+        factory.setSessionAcknowledgeMode(Session.AUTO_ACKNOWLEDGE);
+        factory.setSessionTransacted(false);
+        factory.setPubSubDomain(true);
+        return factory;
+    }
+
+    @Bean("queueContainer")
+    public DefaultJmsListenerContainerFactory queueContainer(ConnectionFactory connectionFactory) {
+        DefaultJmsListenerContainerFactory factory = new DefaultJmsListenerContainerFactory();
+        factory.setConnectionFactory(connectionFactory);
+        // 事务控制（开启后会显著影响消费者性能），默认为false，超过重发次数（缺省为6次）后会发送到死信队列，默认为ActiveMQ.DLQ
+        factory.setSessionAcknowledgeMode(Session.AUTO_ACKNOWLEDGE);
+        factory.setSessionTransacted(false);
+        return factory;
     }
 }
