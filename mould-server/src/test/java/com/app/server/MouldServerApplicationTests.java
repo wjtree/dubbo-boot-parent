@@ -15,14 +15,15 @@ import java.util.List;
 @SpringBootTest
 public class MouldServerApplicationTests {
 
-	@Autowired
-	private UserMapper userMapper;
+    @Autowired
+    private UserMapper userMapper;
 
-	@Test
-	public void contextLoads() {
-		System.out.println("=====================");
-		List<User> users = userMapper.selectAll();
-		System.out.println(JSON.toJSONString(users));
-		System.out.println("=====================");
-	}
+    @Test
+    public void contextLoads() {
+
+        System.out.println("=====================");
+        List<User> users = userMapper.selectAll();
+        System.out.println(JSON.toJSONString(users));
+        System.out.println("=====================");
+    }
 }
