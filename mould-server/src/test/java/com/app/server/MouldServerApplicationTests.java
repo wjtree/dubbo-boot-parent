@@ -3,6 +3,7 @@ package com.app.server;
 import com.alibaba.fastjson.JSON;
 import com.app.server.dao.UserMapper;
 import com.app.server.entity.User;
+import com.app.server.service.UserService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,9 @@ public class MouldServerApplicationTests {
     @Autowired
     private UserMapper userMapper;
 
+    @Autowired
+    private UserService userService;
+
     @Test
     public void contextLoads() {
 
@@ -25,5 +29,16 @@ public class MouldServerApplicationTests {
         List<User> users = userMapper.selectAll();
         System.out.println(JSON.toJSONString(users));
         System.out.println("=====================");
+    }
+
+    @Test
+    public void testSearchDB() {
+        System.out.println("=========================");
+//        User users = userMapper.selectByNameAndPwd("diva","123");
+//        System.out.println(JSON.toJSONString(users));
+
+        boolean diva = userService.checkUser("diva", "123");
+        System.out.println(diva);
+        System.out.println("=========================");
     }
 }

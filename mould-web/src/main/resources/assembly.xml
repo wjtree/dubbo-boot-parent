@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
+    <id>zip-assembly</id>
+    <formats>
+        <format>zip</format>
+    </formats>
+    <!-- 压缩文件中的顶级目录 -->
+    <includeBaseDirectory>true</includeBaseDirectory>
+    <baseDirectory>ROOT</baseDirectory>
+    <fileSets>
+        <!-- WEB文件存放路径 -->
+        <fileSet>
+            <directory>${basedir}/src/main/webapp</directory>
+            <outputDirectory>./</outputDirectory>
+        </fileSet>
+        <!-- Java字节码文件与资源文件存放路径 -->
+        <fileSet>
+            <directory>${basedir}/target/classes</directory>
+            <outputDirectory>./WEB-INF/classes</outputDirectory>
+        </fileSet>
+    </fileSets>
+    <dependencySets>
+        <!-- 依赖JAR包存放路径 -->
+        <dependencySet>
+            <outputDirectory>./WEB-INF/lib</outputDirectory>
+            <excludes>
+                <!-- 排除war文件 -->
+                <exclude>*:war</exclude>
+            </excludes>
+        </dependencySet>
+    </dependencySets>
+</assembly>

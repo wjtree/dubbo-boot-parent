@@ -3,6 +3,8 @@ package com.app.data.document;
 import com.app.core.base.BaseDocument;
 
 public class Book extends BaseDocument {
+    private static final long serialVersionUID = 6368189789098970987L;
+
     private String name;
 
     private String pwd;

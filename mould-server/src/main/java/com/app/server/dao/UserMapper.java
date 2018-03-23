@@ -1,6 +1,7 @@
 package com.app.server.dao;
 
 import com.app.server.entity.User;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -14,4 +15,6 @@ public interface UserMapper {
     List<User> selectAll();
 
     int updateByPrimaryKey(User record);
+
+    User selectByNameAndPwd(@Param("name") String account, @Param("password") String password);
 }
