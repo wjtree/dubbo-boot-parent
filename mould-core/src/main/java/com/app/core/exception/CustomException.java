@@ -1,6 +1,6 @@
 package com.app.core.exception;
 
-public class CustomException extends Exception {
+public class CustomException extends RuntimeException {
     private static final long serialVersionUID = 2936935239109288358L;
 
     public CustomException() {

@@ -3,21 +3,16 @@ package com.app.web.internal;
 import com.app.api.exception.ApiException;
 import com.app.api.internal.ApiResult;
 import com.app.api.internal.ApiUtil;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Map;
 
+@Log4j2
 @ControllerAdvice
 public class GlobalExceptionHandler {
-    /**
-     * Spring Boot 默认错误视图
-     */
-    private static final String DEFAULT_ERROR_VIEW = "error";
-
     /**
      * 处理系统异常，返回视图页面
      *
@@ -26,9 +21,10 @@ public class GlobalExceptionHandler {
      * @return ModelAndView
      */
     @ExceptionHandler(Exception.class)
-    public ModelAndView defaultErrorHandler(HttpServletRequest request, Exception e) {
-        Map<String, ?> model = ApiUtil.result(e.getMessage(), request.getRequestURL().toString());
-        return new ModelAndView(DEFAULT_ERROR_VIEW, model);
+    @ResponseBody
+    public ApiResult defaultErrorHandler(HttpServletRequest request, Exception e) {
+        log.error("异常类型：{}，\r\n异常消息：{}，\r\n异常栈：{}", e.getClass().getName(), e.getMessage(), e.getStackTrace());
+        return ApiUtil.result(e, request.getRequestURL().toString());
     }
 
     /**
@@ -41,6 +37,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ApiException.class)
     @ResponseBody
     public ApiResult apiErrorHandler(HttpServletRequest request, ApiException e) {
+        log.error("异常类型：{}，\r\n异常消息：{},\r\n异常栈：{}", e.getClass().getName(), e.getMessage(), e.getStackTrace());
         return ApiUtil.result(e, request.getRequestURL().toString());
     }
 }

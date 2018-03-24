@@ -40,6 +40,14 @@ public class ApiException extends RuntimeException {
         this.errMsg = errMsg;
     }
 
+    public ApiException(ApiCode apiCode) {
+        // 装载异常消息 detailMessage
+        super("[" + apiCode.code() + "] " + apiCode.message());
+
+        this.errCode = apiCode.code();
+        this.errMsg = apiCode.message();
+    }
+
     public Integer getErrCode() {
         return errCode;
     }
