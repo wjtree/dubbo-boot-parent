@@ -1,5 +1,6 @@
 package com.app.api.internal;
 
+import com.app.api.exception.ApiException;
 import org.apache.commons.beanutils.PropertyUtils;
 
 import java.util.Map;
@@ -27,7 +28,7 @@ public class ApiUtil {
      * @return ApiResult
      */
     public static ApiResult result(Integer code, String message) {
-        return new ApiResult<>(code, message);
+        return new ApiResult(code, message);
     }
 
     /**
@@ -39,7 +40,29 @@ public class ApiUtil {
      * @return ApiResult
      */
     public static ApiResult result(Integer code, String message, String url) {
-        return new ApiResult<>(code, message, url);
+        return new ApiResult(code, message, url);
+    }
+
+    /**
+     * API 请求失败时的返回结果
+     *
+     * @param e   ApiException
+     * @param url 请求地址
+     * @return ApiResult
+     */
+    public static ApiResult result(ApiException e, String url) {
+        return new ApiResult(e.getErrCode(), e.getErrMsg(), url);
+    }
+
+    /**
+     * API 请求失败时的返回结果
+     *
+     * @param e   Exception
+     * @param url 请求地址
+     * @return ApiResult
+     */
+    public static ApiResult result(Exception e, String url) {
+        return new ApiResult(null, e.getMessage(), url);
     }
 
     /**
@@ -67,7 +90,7 @@ public class ApiUtil {
     public static Map<String, ?> result(String message, String url) {
         Map<String, ?> map = null;
         try {
-            ApiResult result = new ApiResult<>(null, message, url);
+            ApiResult result = new ApiResult(null, message, url);
             map = PropertyUtils.describe(result);
             map.remove("class");
         } catch (Exception e) {

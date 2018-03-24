@@ -41,6 +41,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ApiException.class)
     @ResponseBody
     public ApiResult apiErrorHandler(HttpServletRequest request, ApiException e) {
-        return ApiUtil.result(e.getErrCode(), e.getErrMsg(), request.getRequestURL().toString());
+        return ApiUtil.result(e, request.getRequestURL().toString());
     }
 }
