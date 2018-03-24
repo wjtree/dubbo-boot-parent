@@ -1,8 +1,8 @@
 package com.app.server;
 
 import com.alibaba.fastjson.JSON;
+import com.app.api.model.User;
 import com.app.server.dao.UserMapper;
-import com.app.server.entity.User;
 import com.app.server.service.UserService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,6 +39,12 @@ public class MouldServerApplicationTests {
 
         boolean diva = userService.checkUser("diva", "123");
         System.out.println(diva);
+        System.out.println("=========================");
+    }
+
+    @Test
+    public void testEhCache() {
+        System.out.println("=========================");
         System.out.println("=========================");
     }
 }

@@ -1,6 +1,6 @@
 package com.app.server.dao;
 
-import com.app.server.entity.User;
+import com.app.api.model.User;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;

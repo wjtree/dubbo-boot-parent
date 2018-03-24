@@ -1,7 +1,7 @@
 package com.app.server.service;
 
+import com.app.api.model.User;
 import com.app.server.dao.UserMapper;
-import com.app.server.entity.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

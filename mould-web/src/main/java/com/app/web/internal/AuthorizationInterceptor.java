@@ -1,4 +1,4 @@
-package com.app.web.interceptor;
+package com.app.web.internal;
 
 import com.app.core.util.JwtUtil;
 import lombok.extern.log4j.Log4j2;

@@ -8,7 +8,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication(scanBasePackages = {"com.app.server"}, scanBasePackageClasses = {IocUtil.class})
 @MapperScan("com.app.server.dao")
-@DubboComponentScan(basePackages = "com.app.server.provider")
+@DubboComponentScan("com.app.server.provider")
 public class MouldServerApplication {
 
     public static void main(String[] args) {

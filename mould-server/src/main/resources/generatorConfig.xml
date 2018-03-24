@@ -27,7 +27,7 @@
         </javaTypeResolver>
 
         <!-- 实体类 -->
-        <javaModelGenerator targetPackage="com.app.server.entity" targetProject="./src/main/java">
+        <javaModelGenerator targetPackage="com.app.api.model" targetProject="../mould-api/src/main/java">
             <property name="enableSubPackages" value="true"/>
             <property name="trimStrings" value="true"/>
         </javaModelGenerator>

@@ -40,7 +40,7 @@ public class EhCacheUtil {
         // 获取无到期时间的缓存域
         noExpiryCache = getCache("noExpiryCache", String.class, String.class);
         // 获取有到期时间的缓存域，有效期：10分钟
-        expiryCache = getCache("noExpiryCache", String.class, String.class);
+        expiryCache = getCache("expiryCache", String.class, String.class);
     }
 
     /**
@@ -51,7 +51,7 @@ public class EhCacheUtil {
      * @param valueType 值类型
      * @return
      */
-    public static <K, V> Cache<K, V> getCache(String alias, Class<K> keyType, Class<V> valueType) {
+    private static <K, V> Cache<K, V> getCache(String alias, Class<K> keyType, Class<V> valueType) {
         return cacheManager.getCache(alias, keyType, valueType);
     }
 
