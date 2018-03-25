@@ -14,9 +14,9 @@ public class HelloProviderImpl implements HelloProvider {
     public String sayHello(String name) throws Exception {
         if (StringUtils.equalsIgnoreCase(name, "ddd"))
             throw new ApiException(ApiCode.UNAUTHORIZED);
-        else if (StringUtils.equalsIgnoreCase(name, "fff"))
-            throw new RuntimeException("运行时异常");
         else if (StringUtils.equalsIgnoreCase(name, "eee"))
+            throw new RuntimeException("运行时异常");
+        else if (StringUtils.equalsIgnoreCase(name, "fff"))
             throw new Exception("待检查异常，需捕获处理");
 
         if (log.isInfoEnabled())
