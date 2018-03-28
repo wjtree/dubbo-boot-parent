@@ -9,6 +9,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -17,6 +18,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class HelloController {
     @Reference(version = "1.0")
     private HelloProvider helloProvider;
+
+    @Value("${info.app.message}")
+    private String infoAppMsg;
 
     @ApiOperation(value = "简单示例接口", notes = "返回字符串")
     @ApiImplicitParam(name = "name", value = "姓名", required = true, dataTypeClass = String.class)
@@ -29,7 +33,7 @@ public class HelloController {
         else if (StringUtils.equalsIgnoreCase(name, "ccc"))
             throw new Exception("待检查异常，需捕获处理");
 
-        String data = helloProvider.sayHello(name);
+        String data = helloProvider.sayHello(infoAppMsg + " - " + name);
 
         return ApiUtil.result(data);
     }
