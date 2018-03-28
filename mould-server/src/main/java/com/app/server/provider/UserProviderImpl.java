@@ -1,6 +1,7 @@
 package com.app.server.provider;
 
 import com.alibaba.dubbo.config.annotation.Service;
+import com.app.api.model.User;
 import com.app.api.provider.UserProvider;
 import com.app.core.util.JwtUtil;
 import com.app.server.service.UserService;
@@ -28,5 +29,10 @@ public class UserProviderImpl implements UserProvider {
             map.put("token", token);
         }
         return map;
+    }
+
+    @Override
+    public void addUser(User user) {
+        userService.addUser(user);
     }
 }

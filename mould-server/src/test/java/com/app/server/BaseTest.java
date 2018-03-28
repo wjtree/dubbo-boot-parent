@@ -1,16 +1,18 @@
 package com.app.server;
 
+import com.alibaba.fastjson.JSON;
+import com.app.api.model.User;
 import com.app.core.util.EhCacheUtil;
 import org.junit.Test;
 
 public class BaseTest {
     @Test
-    public void testEhcache(){
+    public void testEhcache() {
         System.out.println("================");
         String demo1 = EhCacheUtil.expiryCache.get("demo1");
         System.out.println(demo1);
 
-        EhCacheUtil.expiryCache.put("demo1","11111111111111");
+        EhCacheUtil.expiryCache.put("demo1", "11111111111111");
 
         demo1 = EhCacheUtil.expiryCache.get("demo1");
         System.out.println(demo1);
@@ -21,5 +23,19 @@ public class BaseTest {
         System.out.println(demo1);
 
         System.out.println("================");
+    }
+
+    @Test
+    public void testEhcache2() {
+        User user = new User();
+        user.setId("2");
+        user.setName("tom");
+        user.setAge(33);
+        user.setPhone("888888");
+        user.setNickname("汤姆");
+        user.setPassword("999");
+
+
+        System.out.println(JSON.toJSONString(user));
     }
 }

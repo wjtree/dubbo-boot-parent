@@ -1,17 +1,20 @@
 package com.app.data.config;
 
 import com.whalin.MemCached.SockIOPool;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class MemCachedConfig {
+    // server list and weights
+    @Value("${spring.memcached.servers}")
+    private String[] servers;
+    @Value("${spring.memcached.weights}")
+    private Integer[] weights;
+
     @Bean
     public SockIOPool sockIOPool() {
-        // server list and weights
-        String[] servers = {"111.230.185.199:12101"};
-        Integer[] weights = {3};
-
         // grab an instance of our connection pool
         SockIOPool pool = SockIOPool.getInstance();
 

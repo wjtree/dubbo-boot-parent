@@ -2,6 +2,7 @@ package com.app.data.config;
 
 import com.app.core.util.IocUtil;
 import com.app.data.job.DemoJob;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
@@ -18,6 +19,11 @@ import java.util.Map;
  */
 @Configuration
 public class QuartzConfig {
+    @Value("${spring.quartz.scheduler.name}")
+    private String schedulerName;
+    @Value("${spring.quartz.config.path}")
+    private String path;
+
     /**
      * 作业配置
      *
@@ -65,10 +71,10 @@ public class QuartzConfig {
     @Bean
     public SchedulerFactoryBean scheduler() {
         SchedulerFactoryBean schedulerFactoryBean = new SchedulerFactoryBean();
-        schedulerFactoryBean.setSchedulerName("mould-data-scheduler");
+        schedulerFactoryBean.setSchedulerName(schedulerName);
         schedulerFactoryBean.setTriggers(demoJobTrigger().getObject());
         // quartz 配置文件路径
-        schedulerFactoryBean.setConfigLocation(new ClassPathResource("quartz.properties"));
+        schedulerFactoryBean.setConfigLocation(new ClassPathResource(path));
         // quartz 数据源
         schedulerFactoryBean.setDataSource(IocUtil.getBean(DataSource.class));
         return schedulerFactoryBean;

@@ -45,6 +45,18 @@ public class MouldServerApplicationTests {
     @Test
     public void testEhCache() {
         System.out.println("=========================");
+        User user = new User();
+        user.setId("2");
+        user.setName("tom");
+        user.setAge(33);
+        user.setPhone("888888");
+        user.setNickname("汤姆");
+        user.setPassword("999");
+
+
+        System.out.println(JSON.toJSONString(user));
+//        userService.addUser(user);
+
         System.out.println("=========================");
     }
 }

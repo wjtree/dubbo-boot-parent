@@ -1,5 +1,6 @@
 package com.app.server.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jms.config.DefaultJmsListenerContainerFactory;
@@ -10,13 +11,18 @@ import javax.jms.Session;
 
 @Configuration
 public class ActiveMQConfig {
+    @Value("${spring.activemq.topic.name}")
+    private String topicName;
+    @Value("${spring.activemq.queue.name}")
+    private String queueName;
+
     @Bean("topicTemplate")
     public JmsTemplate topicTemplate(ConnectionFactory connectionFactory) {
         JmsTemplate template = new JmsTemplate();
         template.setConnectionFactory(connectionFactory);
         template.setSessionTransacted(true);
         template.setPubSubDomain(true);
-        template.setDefaultDestinationName("topic.sh");
+        template.setDefaultDestinationName(topicName);
         return template;
     }
 
@@ -26,7 +32,7 @@ public class ActiveMQConfig {
         template.setConnectionFactory(connectionFactory);
         template.setSessionTransacted(true);
         template.setPubSubDomain(false);
-        template.setDefaultDestinationName("queue.sh");
+        template.setDefaultDestinationName(queueName);
         return template;
     }
 
