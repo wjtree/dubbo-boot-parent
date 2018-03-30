@@ -2,22 +2,21 @@ package com.app.api.provider;
 
 import com.app.api.model.User;
 
-import java.util.Map;
-
 public interface UserProvider {
     /**
-     * 登录验证
+     * 用户登录接口
      *
-     * @param account  用户名
+     * @param username 用户名
      * @param password 密码
-     * @return
+     * @return Object
      */
-    Map<String, Object> login(String account, String password);
+    Object signIn(String username, String password);
 
     /**
-     * 插入用户对象
+     * 用户注册接口
      *
-     * @param user User
+     * @param user 用户对象
+     * @return Object
      */
-    void addUser(User user);
+    Object signUp(User user);
 }

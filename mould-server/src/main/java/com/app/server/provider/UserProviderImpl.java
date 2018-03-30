@@ -16,23 +16,23 @@ public class UserProviderImpl implements UserProvider {
     private UserService userService;
 
     @Override
-    public Map<String, Object> login(String account, String password) {
+    public Object signIn(String username, String password) {
         Map<String, Object> map = null;
         // 检查是否存在用户
-        boolean flag = userService.checkUser(account, password);
+        boolean flag = userService.checkUser(username, password);
         if (flag) {
             // 获取 JWT Token
-            String token = JwtUtil.buildJWT(account);
+            String token = JwtUtil.buildJWT(username);
             // 装载返回数据
             map = new HashMap<>();
-            map.put("account", account);
+            map.put("account", username);
             map.put("token", token);
         }
         return map;
     }
 
     @Override
-    public void addUser(User user) {
-        userService.addUser(user);
+    public Object signUp(User user) {
+        return userService.addUser(user);
     }
 }
