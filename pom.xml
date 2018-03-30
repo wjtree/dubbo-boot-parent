@@ -119,7 +119,6 @@
                 <groupId>javax.servlet.jsp</groupId>
                 <artifactId>javax.servlet.jsp-api</artifactId>
                 <version>${jsp-api.version}</version>
-                <scope>provided</scope>
             </dependency>
             <!-- javassist -->
             <dependency>

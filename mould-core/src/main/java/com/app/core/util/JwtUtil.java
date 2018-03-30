@@ -33,16 +33,19 @@ public class JwtUtil {
     /**
      * JWT 加解密类型
      */
-    private static final SignatureAlgorithm JWT_ALG = SignatureAlgorithm.HS256;
+    private static final SignatureAlgorithm DEFAULT_ALG = SignatureAlgorithm.HS256;
     /**
      * JWT 生成密钥使用的密码
      */
-    private static final String JWT_RULE = "wjtree.xin";
-
+    private static final String DEFAULT_RULE = "wjtree.xin";
+    /**
+     * JWT 生成密钥使用的密码
+     */
+    private static final SecretKey DEFAULT_KEY = generateKey(DEFAULT_ALG, DEFAULT_RULE);
     /**
      * JWT 添加至HTTP HEAD中的前缀
      */
-    private static final String JWT_SEPARATOR = "Bearer ";
+    private static final String DEFAULT_PREFIX = "Bearer ";
 
     /**
      * 使用JWT默认方式，生成加解密密钥
@@ -50,7 +53,7 @@ public class JwtUtil {
      * @param alg 加解密类型
      * @return
      */
-    public static SecretKey generateKey(SignatureAlgorithm alg) {
+    private static SecretKey generateKey(SignatureAlgorithm alg) {
         return MacProvider.generateKey(alg);
     }
 
@@ -61,7 +64,7 @@ public class JwtUtil {
      * @param rule 密钥生成规则
      * @return
      */
-    public static SecretKey generateKey(SignatureAlgorithm alg, String rule) {
+    private static SecretKey generateKey(SignatureAlgorithm alg, String rule) {
         // 将密钥生成键转换为字节数组
         byte[] bytes = Base64.decodeBase64(rule);
         // 根据指定的加密方式，生成密钥
@@ -102,7 +105,7 @@ public class JwtUtil {
                 .compact();
 
         // 在JWT字符串前添加"Bearer "字符串，用于加入"Authorization"请求头
-        return JWT_SEPARATOR + compact;
+        return DEFAULT_PREFIX.concat(compact);
     }
 
     /**
@@ -117,7 +120,7 @@ public class JwtUtil {
      * @return JWT字符串
      */
     public static String buildJWT(String sub, String aud, String jti, String iss, Date nbf, Integer duration) {
-        return buildJWT(JWT_ALG, generateKey(JWT_ALG, JWT_RULE), sub, aud, jti, iss, nbf, duration);
+        return buildJWT(DEFAULT_ALG, DEFAULT_KEY, sub, aud, jti, iss, nbf, duration);
     }
 
     /**
@@ -149,31 +152,23 @@ public class JwtUtil {
      * @param key       jwt 加密密钥
      * @param claimsJws jwt 内容文本
      * @return {@link Jws}
-     * @throws Exception
      */
     public static Jws<Claims> parseJWT(Key key, String claimsJws) {
         // 移除 JWT 前的"Bearer "字符串
-        claimsJws = StringUtils.substringAfter(claimsJws, JWT_SEPARATOR);
+        claimsJws = StringUtils.substringAfter(claimsJws, DEFAULT_PREFIX);
         // 解析 JWT 字符串
         return Jwts.parser().setSigningKey(key).parseClaimsJws(claimsJws);
     }
 
     /**
-     * 校验JWT
+     * 解析JWT
      *
      * @param claimsJws jwt 内容文本
-     * @return ture or false
+     * @return Claims
      */
-    public static Boolean checkJWT(String claimsJws) {
-        boolean flag = false;
-        try {
-            SecretKey key = generateKey(JWT_ALG, JWT_RULE);
-            // 获取 JWT 的 payload 部分
-            flag = (parseJWT(key, claimsJws).getBody() != null);
-        } catch (Exception e) {
-            log.warn("JWT验证出错，错误原因：{}", e.getMessage());
-        }
-        return flag;
+    public static Claims parseJWT(String claimsJws) {
+        // 获取 JWT 的 payload 部分
+        return parseJWT(DEFAULT_KEY, claimsJws).getBody();
     }
 
     /**
@@ -185,16 +180,7 @@ public class JwtUtil {
      * @return ture or false
      */
     public static Boolean checkJWT(Key key, String claimsJws, String sub) {
-        boolean flag = false;
-        try {
-            // 获取 JWT 的 payload 部分
-            Claims claims = parseJWT(key, claimsJws).getBody();
-            // 比对JWT中的 sub 字段
-            flag = claims.getSubject().equals(sub);
-        } catch (Exception e) {
-            log.warn("JWT验证出错，错误原因：{}", e.getMessage());
-        }
-        return flag;
+        return parseJWT(key, claimsJws).getBody().getSubject().equals(sub);
     }
 
     /**
@@ -205,6 +191,16 @@ public class JwtUtil {
      * @return ture or false
      */
     public static Boolean checkJWT(String claimsJws, String sub) {
-        return checkJWT(generateKey(JWT_ALG, JWT_RULE), claimsJws, sub);
+        return checkJWT(DEFAULT_KEY, claimsJws, sub);
+    }
+
+    /**
+     * 校验JWT
+     *
+     * @param claimsJws jwt 内容文本
+     * @return ture or false
+     */
+    public static Boolean checkJWT(String claimsJws) {
+        return parseJWT(claimsJws) != null;
     }
 }
