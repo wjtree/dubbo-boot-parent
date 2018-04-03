@@ -19,4 +19,12 @@ public interface UserProvider {
      * @return Object
      */
     Object signUp(User user);
+
+    /**
+     * 根据用户名查询用户信息
+     *
+     * @param username 用户名
+     * @return Object
+     */
+    Object searchUser(String username);
 }

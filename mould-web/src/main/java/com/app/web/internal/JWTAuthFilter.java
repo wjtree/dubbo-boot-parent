@@ -27,9 +27,11 @@ public class JWTAuthFilter extends BasicAuthenticationFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
         String header = request.getHeader("Authorization");
+        if (StringUtils.isBlank(header))
+            header = request.getAttribute("Authorization").toString();
 
         if (StringUtils.isBlank(header) || !StringUtils.startsWith(header, "Bearer ")) {
-            log.warn("用户认证失败，请求头中 Authorization 字段不存在或格式错误");
+            log.warn("[JWT] 用户认证失败，请求头中 Authorization 字段不存在或格式错误");
             chain.doFilter(request, response);
             return;
         }

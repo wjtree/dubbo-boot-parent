@@ -35,4 +35,9 @@ public class UserProviderImpl implements UserProvider {
     public Object signUp(User user) {
         return userService.addUser(user);
     }
+
+    @Override
+    public Object searchUser(String username) {
+        return userService.searchUser(username);
+    }
 }

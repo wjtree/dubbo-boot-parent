@@ -17,4 +17,6 @@ public interface UserMapper {
     int updateByPrimaryKey(User record);
 
     User selectByNameAndPwd(@Param("name") String account, @Param("password") String password);
+
+    User selectByName(@Param("name") String account);
 }

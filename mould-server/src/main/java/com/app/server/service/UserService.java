@@ -31,4 +31,14 @@ public class UserService {
     public int addUser(User user) {
         return userMapper.insert(user);
     }
+
+    /**
+     * 查询用户
+     *
+     * @param username 用户名
+     * @return Object
+     */
+    public User searchUser(String username) {
+        return userMapper.selectByName(username);
+    }
 }
