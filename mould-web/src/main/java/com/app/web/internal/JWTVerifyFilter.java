@@ -18,31 +18,39 @@ import java.io.IOException;
  * 校验 JWT Token
  */
 @Log4j2
-public class JWTAuthFilter extends BasicAuthenticationFilter {
+public class JWTVerifyFilter extends BasicAuthenticationFilter {
 
-    public JWTAuthFilter(AuthenticationManager authenticationManager) {
+    public JWTVerifyFilter(AuthenticationManager authenticationManager) {
         super(authenticationManager);
     }
 
+    /**
+     * 校验 JWT Token
+     *
+     * @param request  HttpServletRequest
+     * @param response HttpServletResponse
+     * @param chain    FilterChain
+     * @throws IOException      IOException
+     * @throws ServletException ServletException
+     */
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
+        // 获取请求头中的 Authorization 字段
         String header = request.getHeader("Authorization");
-        if (StringUtils.isBlank(header))
-            header = request.getAttribute("Authorization").toString();
 
         if (StringUtils.isBlank(header) || !StringUtils.startsWith(header, "Bearer ")) {
-            log.warn("[JWT] 用户认证失败，请求头中 Authorization 字段不存在或格式错误");
             chain.doFilter(request, response);
             return;
         }
 
         // 从 Token 中获取用户信息
         String userId = JwtUtil.parseJWT(header).getSubject();
-        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userId, null);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+        UsernamePasswordAuthenticationToken authResult = new UsernamePasswordAuthenticationToken(userId, null);
+        SecurityContextHolder.getContext().setAuthentication(authResult);
+        onSuccessfulAuthentication(request, response, authResult);
 
         if (log.isDebugEnabled())
-            log.debug("[JWT] Token 校验成功，用户编号：{}", userId);
+            log.debug("[Security] Token 校验成功，用户编号：{}", userId);
 
         chain.doFilter(request, response);
     }
