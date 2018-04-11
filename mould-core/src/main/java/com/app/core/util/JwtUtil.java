@@ -1,5 +1,6 @@
 package com.app.core.util;
 
+import com.alibaba.fastjson.JSON;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
@@ -14,6 +15,8 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.Key;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -46,6 +49,14 @@ public class JwtUtil {
      * JWT 添加至HTTP HEAD中的前缀
      */
     private static final String DEFAULT_PREFIX = "Bearer ";
+    /**
+     * JWT 有效时间，单位：秒，默认10分钟有效期
+     */
+    private static final Integer DEFAULT_DURATION = 10 * 60;
+    /**
+     * JWT payload 自定义参数，表示用户授权
+     */
+    public static final String CLAIM_AUTH = "auth";
 
     /**
      * 使用JWT默认方式，生成加解密密钥
@@ -53,7 +64,7 @@ public class JwtUtil {
      * @param alg 加解密类型
      * @return
      */
-    private static SecretKey generateKey(SignatureAlgorithm alg) {
+    public static SecretKey generateKey(SignatureAlgorithm alg) {
         return MacProvider.generateKey(alg);
     }
 
@@ -64,7 +75,7 @@ public class JwtUtil {
      * @param rule 密钥生成规则
      * @return
      */
-    private static SecretKey generateKey(SignatureAlgorithm alg, String rule) {
+    public static SecretKey generateKey(SignatureAlgorithm alg, String rule) {
         // 将密钥生成键转换为字节数组
         byte[] bytes = Base64.decodeBase64(rule);
         // 根据指定的加密方式，生成密钥
@@ -82,9 +93,10 @@ public class JwtUtil {
      * @param iss      jwt 签发者
      * @param nbf      jwt 生效日期时间
      * @param duration jwt 有效时间，单位：秒
+     * @param claims   jwt 自定义参数键值对，如用户权限等
      * @return JWT字符串
      */
-    public static String buildJWT(SignatureAlgorithm alg, Key key, String sub, String aud, String jti, String iss, Date nbf, Integer duration) {
+    public static String buildJWT(SignatureAlgorithm alg, Key key, String sub, String aud, String jti, String iss, Date nbf, Integer duration, Map<String, Object> claims) {
         // jwt的签发时间
         DateTime iat = DateTime.now();
         // jwt的过期时间，这个过期时间必须要大于签发时间
@@ -102,14 +114,20 @@ public class JwtUtil {
                 .setNotBefore(nbf)
                 .setIssuedAt(iat.toDate())
                 .setExpiration(exp != null ? exp.toDate() : null)
+                .addClaims(claims)
                 .compact();
 
         // 在JWT字符串前添加"Bearer "字符串，用于加入"Authorization"请求头
-        return DEFAULT_PREFIX.concat(compact);
+        compact = DEFAULT_PREFIX.concat(compact);
+
+        if (log.isDebugEnabled())
+            log.debug("JSON Web Tokens 构建成功：{}", compact);
+
+        return compact;
     }
 
     /**
-     * 构建JWT
+     * 构建JWT ，使用默认 KEY
      *
      * @param sub      jwt 面向的用户
      * @param aud      jwt 接收方
@@ -117,21 +135,40 @@ public class JwtUtil {
      * @param iss      jwt 签发者
      * @param nbf      jwt 生效日期时间
      * @param duration jwt 有效时间，单位：秒
+     * @param claims   jwt 自定义参数键值对，如用户权限等
      * @return JWT字符串
      */
-    public static String buildJWT(String sub, String aud, String jti, String iss, Date nbf, Integer duration) {
-        return buildJWT(DEFAULT_ALG, DEFAULT_KEY, sub, aud, jti, iss, nbf, duration);
+    public static String buildJWT(String sub, String aud, String jti, String iss, Date nbf, Integer duration, Map<String, Object> claims) {
+        return buildJWT(DEFAULT_ALG, DEFAULT_KEY, sub, aud, jti, iss, nbf, duration, claims);
     }
 
     /**
      * 构建JWT
+     * <p>使用 UUID 作为 jti 唯一身份标识</p>
+     * <p>JWT有效时间 600 秒，即 10 分钟</p>
      *
-     * @param sub jwt 面向的用户
-     * @param jti jwt 唯一身份标识，主要用来作为一次性token,从而回避重放攻击
+     * @param sub    jwt 面向的用户
+     * @param claims jwt 自定义参数键值对，如用户权限等
      * @return JWT字符串
      */
-    public static String buildJWT(String sub, String jti, Integer duration) {
-        return buildJWT(sub, null, jti, null, null, duration);
+    public static String buildJWT(String sub, Map<String, Object> claims) {
+        return buildJWT(sub, null, UUID.randomUUID().toString(), null, null, DEFAULT_DURATION, claims);
+    }
+
+    /**
+     * 构建JWT
+     * <p>使用 UUID 作为 jti 唯一身份标识</p>
+     * <p>JWT有效时间 600 秒，即 10 分钟</p>
+     *
+     * @param sub  jwt 面向的用户
+     * @param auth jwt 自定义参数，用户权限
+     * @return JWT字符串
+     */
+    public static String buildJWT(String sub, String auth) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put(CLAIM_AUTH, auth);
+
+        return buildJWT(sub, claims);
     }
 
     /**
@@ -143,7 +180,7 @@ public class JwtUtil {
      * @return JWT字符串
      */
     public static String buildJWT(String sub) {
-        return buildJWT(sub, null, UUID.randomUUID().toString(), null, null, 600);
+        return buildJWT(sub, null, UUID.randomUUID().toString(), null, null, DEFAULT_DURATION, null);
     }
 
     /**
@@ -157,11 +194,16 @@ public class JwtUtil {
         // 移除 JWT 前的"Bearer "字符串
         claimsJws = StringUtils.substringAfter(claimsJws, DEFAULT_PREFIX);
         // 解析 JWT 字符串
-        return Jwts.parser().setSigningKey(key).parseClaimsJws(claimsJws);
+        Jws<Claims> jws = Jwts.parser().setSigningKey(key).parseClaimsJws(claimsJws);
+
+        if (log.isDebugEnabled())
+            log.debug("JSON Web Tokens 解析成功：{}", JSON.toJSONString(jws));
+
+        return jws;
     }
 
     /**
-     * 解析JWT
+     * 解析JWT ，使用默认 KEY
      *
      * @param claimsJws jwt 内容文本
      * @return Claims
@@ -172,35 +214,13 @@ public class JwtUtil {
     }
 
     /**
-     * 校验JWT
-     *
-     * @param key       jwt 加密密钥
-     * @param claimsJws jwt 内容文本
-     * @param sub       jwt 面向的用户
-     * @return ture or false
-     */
-    public static Boolean checkJWT(Key key, String claimsJws, String sub) {
-        return parseJWT(key, claimsJws).getBody().getSubject().equals(sub);
-    }
-
-    /**
-     * 校验JWT
+     * 校验JWT ，使用默认 KEY
      *
      * @param claimsJws jwt 内容文本
      * @param sub       jwt 面向的用户
      * @return ture or false
      */
     public static Boolean checkJWT(String claimsJws, String sub) {
-        return checkJWT(DEFAULT_KEY, claimsJws, sub);
-    }
-
-    /**
-     * 校验JWT
-     *
-     * @param claimsJws jwt 内容文本
-     * @return ture or false
-     */
-    public static Boolean checkJWT(String claimsJws) {
-        return parseJWT(claimsJws) != null;
+        return parseJWT(claimsJws).getSubject().equals(sub);
     }
 }

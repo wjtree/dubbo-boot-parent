@@ -3,6 +3,8 @@ package com.app.server;
 import com.alibaba.fastjson.JSON;
 import com.app.api.model.User;
 import com.app.core.util.EhCacheUtil;
+import com.app.core.util.JwtUtil;
+import io.jsonwebtoken.Claims;
 import org.junit.Test;
 
 public class BaseTest {
@@ -37,5 +39,13 @@ public class BaseTest {
 
 
         System.out.println(JSON.toJSONString(user));
+    }
+
+    @Test
+    public void test3() {
+//        String jwt = JwtUtil.buildJWT("wjtree");
+        String jwt = JwtUtil.buildJWT("wjtree", "ROLE_ADMIN,AUTH_WRITE");
+
+        Claims claims = JwtUtil.parseJWT(jwt);
     }
 }
