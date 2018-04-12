@@ -136,8 +136,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
             ApiResult result = ApiUtil.result(jwt);
 
             // 将 ApiResult 写入 body
-            response.setContentType(MediaType.APPLICATION_JSON_UTF8_VALUE);
             response.setStatus(HttpServletResponse.SC_OK);
+            response.setContentType(MediaType.APPLICATION_JSON_UTF8_VALUE);
             response.getOutputStream().println(JSON.toJSONString(result));
         }
 
@@ -149,8 +149,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
             ApiResult result = ApiUtil.result(failed, request.getRequestURI());
 
             // 将 ApiResult 写入 body
-            response.setContentType(MediaType.APPLICATION_JSON_UTF8_VALUE);
             response.setStatus(HttpServletResponse.SC_OK);
+            response.setContentType(MediaType.APPLICATION_JSON_UTF8_VALUE);
             response.getOutputStream().println(JSON.toJSONString(result));
         }
     }
