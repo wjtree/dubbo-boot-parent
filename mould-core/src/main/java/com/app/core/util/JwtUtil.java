@@ -46,13 +46,13 @@ public class JwtUtil {
      */
     private static final SecretKey DEFAULT_KEY = generateKey(DEFAULT_ALG, DEFAULT_RULE);
     /**
-     * JWT 添加至HTTP HEAD中的前缀
-     */
-    private static final String DEFAULT_PREFIX = "Bearer ";
-    /**
      * JWT 有效时间，单位：秒，默认10分钟有效期
      */
     private static final Integer DEFAULT_DURATION = 10 * 60;
+    /**
+     * JWT 添加至HTTP HEAD中的前缀
+     */
+    public static final String PREFIX = "Bearer ";
     /**
      * JWT payload 自定义参数，表示用户授权
      */
@@ -118,7 +118,7 @@ public class JwtUtil {
                 .compact();
 
         // 在JWT字符串前添加"Bearer "字符串，用于加入"Authorization"请求头
-        compact = DEFAULT_PREFIX.concat(compact);
+        compact = PREFIX.concat(compact);
 
         if (log.isDebugEnabled())
             log.debug("JSON Web Tokens 构建成功：{}", compact);
@@ -192,7 +192,7 @@ public class JwtUtil {
      */
     public static Jws<Claims> parseJWT(Key key, String claimsJws) {
         // 移除 JWT 前的"Bearer "字符串
-        claimsJws = StringUtils.substringAfter(claimsJws, DEFAULT_PREFIX);
+        claimsJws = StringUtils.substringAfter(claimsJws, PREFIX);
         // 解析 JWT 字符串
         Jws<Claims> jws = Jwts.parser().setSigningKey(key).parseClaimsJws(claimsJws);
 

@@ -6,33 +6,36 @@ import com.app.api.internal.ApiResult;
 import com.app.api.internal.ApiUtil;
 import com.app.api.model.User;
 import com.app.api.provider.UserProvider;
+import com.app.core.util.IocUtil;
 import com.app.core.util.JwtUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.codec.CharEncoding;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.stereotype.Component;
 import org.springframework.web.filter.GenericFilterBean;
 
 import javax.servlet.FilterChain;
@@ -59,6 +62,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         // 禁用表单TOKEN
         http.csrf().disable()
+                // 禁用 HttpSession
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
                 // 请求认证
                 .authorizeRequests()
                 .antMatchers(HttpMethod.POST, "/login").permitAll()
@@ -68,37 +73,55 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .addFilterBefore(new JWTLoginFilter("/login", authenticationManager()), UsernamePasswordAuthenticationFilter.class)
                 // 验证 JWT TOKEN
                 .addFilterBefore(new JWTAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+
+        // 禁用缓存
+        http.headers().cacheControl();
     }
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(new CustomUserDetailsService())
-                .passwordEncoder(PasswordEncoderFactories.createDelegatingPasswordEncoder());
+        // 使用自定义身份验证组件
+        auth.authenticationProvider(IocUtil.getBean(CustomAuthenticationProvider.class));
     }
 
-    /**
-     * 处理用户名和密码的认证
-     */
-    class CustomUserDetailsService implements UserDetailsService {
+    // 自定义身份认证验证组件
+    @Component
+    class CustomAuthenticationProvider implements AuthenticationProvider {
         @Reference(version = "1.0")
         private UserProvider userProvider;
 
         @Override
-        public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-            Object obj = userProvider.searchUser(username);
+        public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+            // 获取认证的用户名 & 密码
+            String name = authentication.getName();
+            String password = authentication.getCredentials().toString();
+            // 查询数据库中的用户信息
+            Object obj = userProvider.searchUser(name);
             if (obj == null)
                 throw new UsernameNotFoundException("[Security] 用户不存在");
+
+            if (log.isDebugEnabled())
+                log.debug("[Security] 查询数据库中用户信息：{}", JSON.toJSONString(obj));
 
             // 获取数据库中的用户名和密码
             User user = (User) obj;
             String dbName = user.getName();
             String dbPassword = user.getPassword();
-            List<GrantedAuthority> authorities = AuthorityUtils.commaSeparatedStringToAuthorityList("USER,ADMIN");
 
-            if (log.isDebugEnabled())
-                log.debug("[Security] 查询数据库中的用户信息，用户名：{}，密码：{}", dbName, dbPassword);
+            // 比对数据库用户信息与认证用户信息
+            if (name.equals(dbName) && password.equals(dbPassword)) {
+                // 设置权限和角色
+                List<GrantedAuthority> authorities = AuthorityUtils.commaSeparatedStringToAuthorityList("USER,ADMIN");
+                // 生成令牌
+                return new UsernamePasswordAuthenticationToken(name, password, authorities);
+            } else {
+                throw new BadCredentialsException("[Security] 密码错误");
+            }
+        }
 
-            return new org.springframework.security.core.userdetails.User(dbName, dbPassword, authorities);
+        @Override
+        public boolean supports(Class<?> authentication) {
+            return authentication.equals(UsernamePasswordAuthenticationToken.class);
         }
     }
 
@@ -117,8 +140,12 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 throws AuthenticationException, IOException, ServletException {
             // 解析请求参数
             User user = new ObjectMapper().readValue(request.getInputStream(), User.class);
+
+            if (log.isDebugEnabled())
+                log.debug("[Security] 认证用户信息：{}", JSON.toJSONString(user));
+
             // 获取用户认证对象
-            UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(user.getId(), user.getPassword());
+            UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(user.getName(), user.getPassword());
             // 验证用户名和密码
             return getAuthenticationManager().authenticate(authenticationToken);
         }
@@ -134,11 +161,15 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
             String jwt = JwtUtil.buildJWT(name, StringUtils.join(authorities, ","));
             // 将 TOKEN 装在到返回结果对象中
             ApiResult result = ApiUtil.result(jwt);
+            String json = JSON.toJSONString(result);
+
+            if (log.isDebugEnabled())
+                log.debug("[Security] 认证用户信息成功：{}", json);
 
             // 将 ApiResult 写入 body
             response.setStatus(HttpServletResponse.SC_OK);
             response.setContentType(MediaType.APPLICATION_JSON_UTF8_VALUE);
-            response.getOutputStream().println(JSON.toJSONString(result));
+            response.getOutputStream().write(json.getBytes(CharEncoding.UTF_8));
         }
 
 
@@ -147,11 +178,15 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 throws IOException {
             // 返回认证失败的结果
             ApiResult result = ApiUtil.result(failed, request.getRequestURI());
+            String json = JSON.toJSONString(result);
+
+            if (log.isDebugEnabled())
+                log.debug("[Security] 认证用户信息失败：{}", json);
 
             // 将 ApiResult 写入 body
             response.setStatus(HttpServletResponse.SC_OK);
             response.setContentType(MediaType.APPLICATION_JSON_UTF8_VALUE);
-            response.getOutputStream().println(JSON.toJSONString(result));
+            response.getOutputStream().write(json.getBytes(CharEncoding.UTF_8));
         }
     }
 
@@ -163,19 +198,25 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain) throws IOException, ServletException {
             // 获取请求头中的 Authorization 字段
             String claimsJws = ((HttpServletRequest) request).getHeader(HttpHeaders.AUTHORIZATION);
+            Authentication authentication = null;
 
-            // 解析 Authorization 字段中的 TOKEN
-            Claims claims = JwtUtil.parseJWT(claimsJws);
-            // 根据解析的 TOKEN 获取用户名和权限
-            String subject = claims.getSubject();
-            String auth = claims.get(JwtUtil.CLAIM_AUTH, String.class);
-            // 将用户权限字符串转换为集合
-            List<GrantedAuthority> authorities = AuthorityUtils.commaSeparatedStringToAuthorityList(auth);
+            if (StringUtils.isNotBlank(claimsJws) || StringUtils.startsWith(claimsJws, JwtUtil.PREFIX)) {
+                // 解析 Authorization 字段中的 TOKEN
+                Claims claims = JwtUtil.parseJWT(claimsJws);
+                // 根据解析的 TOKEN 获取用户名和权限
+                String subject = claims.getSubject();
+                String auth = claims.get(JwtUtil.CLAIM_AUTH, String.class);
+                // 将用户权限字符串转换为集合
+                List<GrantedAuthority> authorities = AuthorityUtils.commaSeparatedStringToAuthorityList(auth);
 
-            // 获取并装载用户认证对象
-            UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(subject, null, authorities);
-            SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                // 获取并装载用户认证对象
+                authentication = new UsernamePasswordAuthenticationToken(subject, null, authorities);
 
+                if (log.isDebugEnabled())
+                    log.debug("[Security] 校验 JWT Token 成功");
+            }
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
             filterChain.doFilter(request, response);
         }
     }
