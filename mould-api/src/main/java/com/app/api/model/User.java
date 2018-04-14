@@ -1,10 +1,12 @@
 package com.app.api.model;
 
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 
 public class User implements Serializable {
     private String id;
 
+    @NotBlank
     private String name;
 
     private Integer age;

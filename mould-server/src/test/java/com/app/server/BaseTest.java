@@ -31,8 +31,8 @@ public class BaseTest {
     public void testEhcache2() {
         User user = new User();
         user.setId("2");
-        user.setName("tom");
-        user.setAge(33);
+//        user.setName("tom");
+        user.setAge(null);
         user.setPhone("888888");
         user.setNickname("汤姆");
         user.setPassword("999");

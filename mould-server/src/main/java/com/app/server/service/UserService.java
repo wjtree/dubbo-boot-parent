@@ -4,10 +4,14 @@ import com.app.api.model.User;
 import com.app.server.dao.UserMapper;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 @Log4j2
 @Service
+@CacheConfig(cacheNames = "users")
 public class UserService {
     @Autowired
     private UserMapper userMapper;
@@ -19,6 +23,7 @@ public class UserService {
      * @param password 密码
      * @return true or false
      */
+    @Cacheable
     public boolean checkUser(String username, String password) {
         return userMapper.selectByNameAndPwd(username, password) != null;
     }
@@ -28,6 +33,7 @@ public class UserService {
      *
      * @param user User
      */
+    @CachePut
     public int addUser(User user) {
         return userMapper.insert(user);
     }
@@ -38,6 +44,7 @@ public class UserService {
      * @param username 用户名
      * @return Object
      */
+    @Cacheable
     public User searchUser(String username) {
         return userMapper.selectByName(username);
     }
