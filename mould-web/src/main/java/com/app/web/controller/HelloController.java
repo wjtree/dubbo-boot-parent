@@ -9,6 +9,7 @@ import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiOperation;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -18,6 +19,7 @@ public class HelloController {
     @Autowired
     private HelloConsumer consumer;
 
+    @PreAuthorize("hasAnyAuthority('USER','ADMIN')")
     @ApiOperation(value = "简单示例接口", notes = "返回字符串")
     @ApiImplicitParam(name = "name", value = "姓名", required = true, dataTypeClass = String.class)
     @RequestMapping("hello")

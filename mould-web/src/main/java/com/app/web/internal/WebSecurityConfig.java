@@ -17,10 +17,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -31,6 +30,8 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
@@ -50,6 +51,7 @@ import java.util.List;
 
 @Log4j2
 @EnableWebSecurity
+@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     public void configure(WebSecurity web) {
@@ -82,53 +84,31 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        // 使用自定义身份验证组件
-        auth.authenticationProvider(IocUtil.getBean(CustomAuthenticationProvider.class));
+        auth.userDetailsService(IocUtil.getBean(CustomUserDetailsService.class))
+                .passwordEncoder(PasswordEncoderFactories.createDelegatingPasswordEncoder());
     }
 
-    // 自定义身份认证验证组件
     @Component
-    class CustomAuthenticationProvider implements AuthenticationProvider {
+    class CustomUserDetailsService implements UserDetailsService {
         @Autowired
         private UserConsumer consumer;
 
         @Override
-        public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-            // 获取认证的用户名 & 密码
-            String name = authentication.getName();
-            String password = authentication.getCredentials().toString();
-            password = PasswordEncoderFactories.createDelegatingPasswordEncoder().encode(password);
-
-            if (log.isDebugEnabled())
-                log.debug("[Security] 认证用户名：{}，密码：{}", name, password);
-
-            // 查询数据库中的用户信息
-            Object obj = consumer.searchUser(name);
+        public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+            Object obj = consumer.searchUser(username);
             if (obj == null)
                 throw new UsernameNotFoundException("[Security] 用户不存在");
-
-            if (log.isDebugEnabled())
-                log.debug("[Security] 查询数据库中用户信息：{}", JSON.toJSONString(obj));
 
             // 获取数据库中的用户名和密码
             User user = (User) obj;
             String dbName = user.getName();
             String dbPassword = user.getPassword();
+            List<GrantedAuthority> authorities = AuthorityUtils.commaSeparatedStringToAuthorityList("USER,ADMIN");
 
-            // 比对数据库用户信息与认证用户信息
-            if (name.equals(dbName) && password.equals(dbPassword)) {
-                // 设置权限和角色
-                List<GrantedAuthority> authorities = AuthorityUtils.commaSeparatedStringToAuthorityList("USER,ADMIN");
-                // 生成令牌
-                return new UsernamePasswordAuthenticationToken(name, password, authorities);
-            } else {
-                throw new BadCredentialsException("[Security] 密码错误");
-            }
-        }
+            if (log.isDebugEnabled())
+                log.debug("[Security] 查询数据库中的用户信息，用户名：{}，密码：{}", dbName, dbPassword);
 
-        @Override
-        public boolean supports(Class<?> authentication) {
-            return authentication.equals(UsernamePasswordAuthenticationToken.class);
+            return new org.springframework.security.core.userdetails.User(dbName, dbPassword, authorities);
         }
     }
 
