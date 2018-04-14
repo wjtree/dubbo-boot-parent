@@ -1,18 +1,18 @@
 package com.app.web.internal;
 
-import com.alibaba.dubbo.config.annotation.Reference;
 import com.alibaba.fastjson.JSON;
 import com.app.api.internal.ApiResult;
 import com.app.api.internal.ApiUtil;
 import com.app.api.model.User;
-import com.app.api.provider.UserProvider;
 import com.app.core.util.IocUtil;
 import com.app.core.util.JwtUtil;
+import com.app.web.consumer.UserConsumer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.codec.CharEncoding;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -32,6 +32,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
@@ -67,6 +68,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 // 请求认证
                 .authorizeRequests()
                 .antMatchers(HttpMethod.POST, "/login").permitAll()
+                .antMatchers(HttpMethod.POST, "/signIn", "/signUp").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 // 登录验证并分发 JWT TOKEN
@@ -87,16 +89,21 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     // 自定义身份认证验证组件
     @Component
     class CustomAuthenticationProvider implements AuthenticationProvider {
-        @Reference(version = "1.0")
-        private UserProvider userProvider;
+        @Autowired
+        private UserConsumer consumer;
 
         @Override
         public Authentication authenticate(Authentication authentication) throws AuthenticationException {
             // 获取认证的用户名 & 密码
             String name = authentication.getName();
             String password = authentication.getCredentials().toString();
+            password = PasswordEncoderFactories.createDelegatingPasswordEncoder().encode(password);
+
+            if (log.isDebugEnabled())
+                log.debug("[Security] 认证用户名：{}，密码：{}", name, password);
+
             // 查询数据库中的用户信息
-            Object obj = userProvider.searchUser(name);
+            Object obj = consumer.searchUser(name);
             if (obj == null)
                 throw new UsernameNotFoundException("[Security] 用户不存在");
 
