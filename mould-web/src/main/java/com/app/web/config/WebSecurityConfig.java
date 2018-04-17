@@ -1,4 +1,4 @@
-package com.app.web.internal;
+package com.app.web.config;
 
 import com.alibaba.fastjson.JSON;
 import com.app.api.internal.ApiResult;
@@ -13,6 +13,7 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.commons.codec.CharEncoding;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -24,7 +25,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
@@ -57,8 +57,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     public void configure(WebSecurity web) {
         // 忽略 Swagger2 请求
         web.ignoring().antMatchers("/v2/api-docs", "/swagger-resources/**", "/swagger-ui.html**", "/webjars/**")
-                // 忽略静态资源
-                .antMatchers("/favicon.ico");
+                // 忽略首页
+                .antMatchers("/");
     }
 
     @Override
@@ -66,20 +66,23 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         // 禁用表单TOKEN
         http.csrf().disable()
                 // 禁用 HttpSession
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
+//                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
                 // 请求认证
                 .authorizeRequests()
+                // 忽略 static 目录下静态资源文件的认证
+                .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
+                // 忽略以下请求
                 .antMatchers(HttpMethod.POST, "/login").permitAll()
                 .antMatchers(HttpMethod.POST, "/signIn", "/signUp").permitAll()
-                .anyRequest().authenticated()
-                .and()
+                // 对除忽略路径外，其他所有请求路径进行认证
+                .anyRequest().authenticated().and()
                 // 登录验证并分发 JWT TOKEN
                 .addFilterBefore(new JWTLoginFilter("/login", authenticationManager()), UsernamePasswordAuthenticationFilter.class)
                 // 验证 JWT TOKEN
                 .addFilterBefore(new JWTAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         // 禁用缓存
-        http.headers().cacheControl();
+//        http.headers().cacheControl();
     }
 
     @Override
