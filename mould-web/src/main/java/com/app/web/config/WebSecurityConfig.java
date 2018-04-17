@@ -49,6 +49,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * Spring Security 配置
+ */
 @Log4j2
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
