@@ -7,7 +7,7 @@ import com.app.core.util.JwtUtil;
 import io.jsonwebtoken.Claims;
 import org.junit.Test;
 
-public class BaseTest {
+public class BaseTests {
     @Test
     public void testEhcache() {
         System.out.println("================");
@@ -37,7 +37,6 @@ public class BaseTest {
         user.setNickname("汤姆");
         user.setPassword("999");
 
-
         System.out.println(JSON.toJSONString(user));
     }
 
@@ -48,4 +47,14 @@ public class BaseTest {
 
         Claims claims = JwtUtil.parseJWT(jwt);
     }
+
+    @Test
+    public void test4() {
+
+
+        System.out.println(3*Math.random());
+        System.out.println(3*Math.random());
+        System.out.println(3*Math.random());
+    }
+
 }

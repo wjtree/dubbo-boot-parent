@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.app.api.model.User;
 import com.app.server.dao.UserMapper;
 import com.app.server.service.UserService;
+import org.apache.curator.framework.CuratorFramework;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +15,7 @@ import java.util.List;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-public class MouldServerApplicationTests {
+public class ApplicationTests {
 
     @Autowired
     private UserMapper userMapper;
