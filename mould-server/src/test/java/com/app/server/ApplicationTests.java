@@ -3,15 +3,18 @@ package com.app.server;
 import com.alibaba.fastjson.JSON;
 import com.app.api.model.User;
 import com.app.server.dao.UserMapper;
+import com.app.server.internal.CuratorLockTemplate;
 import com.app.server.service.UserService;
-import org.apache.curator.framework.CuratorFramework;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import javax.sound.midi.Soundbank;
+import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -57,6 +60,23 @@ public class ApplicationTests {
 
         System.out.println(JSON.toJSONString(user));
 //        userService.addUser(user);
+
+        System.out.println("=========================");
+    }
+
+    @Test
+    public void testEhCache2() throws Exception {
+        System.out.println("=========================");
+
+
+        new CuratorLockTemplate() {
+            @Override
+            protected void doLock(String clientName) throws Exception {
+                System.out.println("===============================================");
+                System.out.println("测试方法...");
+                System.out.println("===============================================");
+            }
+        }.lock("test01", 6, TimeUnit.SECONDS);
 
         System.out.println("=========================");
     }

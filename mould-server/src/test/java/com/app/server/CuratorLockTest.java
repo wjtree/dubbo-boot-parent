@@ -1,71 +1,66 @@
 package com.app.server;
 
-import org.apache.curator.RetryPolicy;
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.CuratorFrameworkFactory;
-import org.apache.curator.framework.recipes.locks.InterProcessMutex;
-import org.apache.curator.retry.ExponentialBackoffRetry;
+import com.app.server.internal.CuratorLockTemplate;
+import lombok.extern.log4j.Log4j2;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+@Log4j2
+@RunWith(SpringRunner.class)
+@SpringBootTest
 public class CuratorLockTest {
-    public static void main(String[] args) throws InterruptedException {
-        CountDownLatch latch = new CountDownLatch(5);
-        String zookeeperConnectionString = "localhost:2181,localhost:2182,localhost:2183";
-        RetryPolicy retryPolicy = new ExponentialBackoffRetry(1000, 3);
-        CuratorFramework client = CuratorFrameworkFactory.newClient(
-                zookeeperConnectionString, retryPolicy);
-        client.start();
-        System.out.println("客户端启动。。。。");
+    // 模拟线程的数量
+    private static final int QTY = 5;
+    // 持有锁的时间
+    private static final int TIME = 60;
+
+    @Test
+    public void test() throws Exception {
+        CountDownLatch latch = new CountDownLatch(QTY);
         ExecutorService exec = Executors.newCachedThreadPool();
-        for (int i = 0; i < 5; i++) {
-            exec.submit(new MyLock("client" + i, client, latch));
+
+        for (int i = 0; i < QTY; i++) {
+            exec.submit(new LockRunnable("user" + i, latch));
         }
+
         exec.shutdown();
         latch.await();
-        System.out.println("所有任务执行完毕");
-        client.close();
-        System.out.println("客户端关闭。。。。");
     }
 
-    static class MyLock implements Runnable {
-        private String name;
-        private CuratorFramework client;
+    static class LockRunnable implements Runnable {
+        private String lockName;
         private CountDownLatch latch;
 
-        public MyLock(String name, CuratorFramework client, CountDownLatch latch) {
-            this.name = name;
-            this.client = client;
+        LockRunnable(String lockName, CountDownLatch latch) {
+            this.lockName = lockName;
             this.latch = latch;
         }
 
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
         public void run() {
-            InterProcessMutex lock = new InterProcessMutex(client, "/test_group");
             try {
-                System.out.println("------" + this.name + "---------等待获取锁。--------");
-                if (lock.acquire(120, TimeUnit.SECONDS)) {
-                    try {
-                        System.out.println("----------" + this.name + "获得资源----------");
-                        System.out.println("----------" + this.name + "正在处理资源----------");
-                        Thread.sleep(10 * 1000);
-                        System.out.println("----------" + this.name + "资源使用完毕----------");
+
+                new CuratorLockTemplate() {
+                    @Override
+                    protected void doLock(String clientName) throws Exception {
+                        log.info("{} 正在处理资源", clientName);
+
+                        // 模拟业务处理过程
+                        Thread.sleep(5 * 1000);
+
+                        log.info("{} 资源使用完毕", clientName);
+
+                        // 将线程计速器减1
                         latch.countDown();
-                    } finally {
-                        lock.release();
-                        System.out.println("----------" + this.name + "释放----------");
                     }
-                }
+                }.lock(lockName, TIME, TimeUnit.SECONDS);
+
             } catch (Exception e) {
                 e.printStackTrace();
             }
