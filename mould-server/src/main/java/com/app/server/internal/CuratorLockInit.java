@@ -45,11 +45,13 @@ public class CuratorLockInit {
         RetryPolicy retryPolicy = new ExponentialBackoffRetry(baseSleepTimeMs, maxRetries);
         // 使用默认会话超时和默认连接超时创建新客户端
         client = CuratorFrameworkFactory.newClient(connectString, retryPolicy);
+        // 监视 SUSPENDED 和 LOST 状态更改
+        client.getConnectionStateListenable().addListener(new CuratorLockListener());
         // 启动客户端
         client.start();
 
         if (log.isInfoEnabled())
-            log.info("Curator 客户端启动完成，状态：{}", client.getState());
+            log.info("Curator 客户端启动完成");
     }
 
     @PreDestroy
@@ -57,7 +59,7 @@ public class CuratorLockInit {
         CloseableUtils.closeQuietly(client);
 
         if (log.isInfoEnabled())
-            log.info("Curator 客户端关闭完成，状态：{}", client.getState());
+            log.info("Curator 客户端关闭完成");
     }
 
     /**

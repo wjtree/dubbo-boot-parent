@@ -50,8 +50,6 @@ public class BaseTests {
 
     @Test
     public void test4() {
-
-
         System.out.println(3*Math.random());
         System.out.println(3*Math.random());
         System.out.println(3*Math.random());
