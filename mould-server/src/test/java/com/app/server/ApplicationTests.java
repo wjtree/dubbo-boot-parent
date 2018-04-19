@@ -41,8 +41,8 @@ public class ApplicationTests {
 //        User users = userMapper.selectByNameAndPwd("diva","123");
 //        System.out.println(JSON.toJSONString(users));
 
-        boolean diva = userService.checkUser("diva", "123");
-        System.out.println(diva);
+//        boolean diva = userService.checkUser("diva", "123");
+//        System.out.println(diva);
         System.out.println("=========================");
     }
 
