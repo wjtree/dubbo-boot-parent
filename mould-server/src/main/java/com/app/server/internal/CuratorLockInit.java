@@ -12,6 +12,8 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 初始化 Curator 客户端及获取分布式锁
@@ -31,14 +33,11 @@ public class CuratorLockInit {
     @Value("${curator.connect.address}")
     private String connectString;
 
-    // 分布式锁路径
-    @Value("${curator.lock.path}")
-    private String lockPath;
-
     // Curator 客户端
     private CuratorFramework client = null;
-    // 共享重入锁
-    private InterProcessMutex interProcessMutex = null;
+
+    // 共享重入锁缓存
+    private static final Map<String, InterProcessMutex> INTER_PROCESS_MUTEX_MAP = new ConcurrentHashMap<>();
 
     @PostConstruct
     void init() {
@@ -64,15 +63,23 @@ public class CuratorLockInit {
     /**
      * 获取共享重入锁
      *
+     * @param lockPath 锁路径
      * @return InterProcessMutex 共享重入锁
      */
-    synchronized InterProcessMutex getInterProcessMutex() {
+    synchronized InterProcessMutex getInterProcessMutex(String lockPath) {
+        // 从缓存中获取 InterProcessMutex 实例
+        InterProcessMutex interProcessMutex = INTER_PROCESS_MUTEX_MAP.get(lockPath);
+
         if (interProcessMutex == null) {
+            // 如果缓存中不存在，则初始化实例
             interProcessMutex = new InterProcessMutex(client, lockPath);
+            // 存入缓存
+            INTER_PROCESS_MUTEX_MAP.put(lockPath, interProcessMutex);
 
             if (log.isInfoEnabled())
                 log.info("初始化共享重入锁成功，锁路径：{}", lockPath);
         }
+
         return interProcessMutex;
     }
 }

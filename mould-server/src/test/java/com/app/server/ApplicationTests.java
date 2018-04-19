@@ -63,21 +63,4 @@ public class ApplicationTests {
 
         System.out.println("=========================");
     }
-
-    @Test
-    public void testEhCache2() throws Exception {
-        System.out.println("=========================");
-
-
-        new CuratorLockTemplate() {
-            @Override
-            protected void doLock(String clientName) throws Exception {
-                System.out.println("===============================================");
-                System.out.println("测试方法...");
-                System.out.println("===============================================");
-            }
-        }.lock("test01", 6, TimeUnit.SECONDS);
-
-        System.out.println("=========================");
-    }
 }

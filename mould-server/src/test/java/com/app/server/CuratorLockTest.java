@@ -10,7 +10,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 @Log4j2
 @RunWith(SpringRunner.class)
@@ -19,7 +18,9 @@ public class CuratorLockTest {
     // 模拟线程的数量
     private static final int QTY = 5;
     // 持有锁的时间
-    private static final int TIME = 60;
+    private static final int TIME = 30;
+    // 锁路径
+    private static final String LOCK_PATH = "/example/lock";
 
     @Test
     public void test() throws Exception {
@@ -48,18 +49,19 @@ public class CuratorLockTest {
 
                 new CuratorLockTemplate() {
                     @Override
-                    protected void doLock(String clientName) throws Exception {
-                        log.info("{} 正在处理资源", clientName);
+                    protected void doLock(String lockPath) throws Exception {
+                        log.info("{} 获得资源", lockName);
+                        log.info("{} 正在处理资源...", lockName);
 
                         // 模拟业务处理过程
                         Thread.sleep(5 * 1000);
 
-                        log.info("{} 资源使用完毕", clientName);
+                        log.info("{} 资源使用完毕", lockName);
 
                         // 将线程计速器减1
                         latch.countDown();
                     }
-                }.lock(lockName, TIME, TimeUnit.SECONDS);
+                }.lock(LOCK_PATH, TIME);
 
             } catch (Exception e) {
                 e.printStackTrace();
