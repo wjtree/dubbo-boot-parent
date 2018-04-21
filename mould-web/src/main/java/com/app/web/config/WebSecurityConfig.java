@@ -132,7 +132,12 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
                 throws AuthenticationException, IOException, ServletException {
             // 解析请求参数
-            User user = new ObjectMapper().readValue(request.getInputStream(), User.class);
+            User user;
+            try {
+                user = new ObjectMapper().readValue(request.getInputStream(), User.class);
+            } catch (Exception e) {
+                throw new UsernameNotFoundException("认证参数错误");
+            }
 
             if (log.isDebugEnabled())
                 log.debug("[Security] 认证用户信息：{}", JSON.toJSONString(user));
