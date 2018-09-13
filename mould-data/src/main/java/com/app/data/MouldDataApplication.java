@@ -12,4 +12,5 @@ public class MouldDataApplication {
     public static void main(String[] args) {
         SpringApplication.run(MouldDataApplication.class, args);
     }
+
 }

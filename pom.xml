@@ -56,6 +56,7 @@
         <netty3.version>3.10.6.Final</netty3.version>
         <zookeeper.version>3.4.11</zookeeper.version>
         <curator.version>4.0.1</curator.version>
+        <kafka-streams.version>1.0.1</kafka-streams.version>
         <redisson.version>3.6.5</redisson.version>
         <jjwt.version>0.9.0</jjwt.version>
         <springfox.version>2.8.0</springfox.version>
@@ -185,6 +186,12 @@
                         <artifactId>zookeeper</artifactId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+            <!-- Kafka Streams -->
+            <dependency>
+                <groupId>org.apache.kafka</groupId>
+                <artifactId>kafka-streams</artifactId>
+                <version>${kafka-streams.version}</version>
             </dependency>
             <!-- Redisson -->
             <dependency>
