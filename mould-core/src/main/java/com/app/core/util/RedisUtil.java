@@ -1,7 +1,10 @@
 package com.app.core.util;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.data.redis.core.*;
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import java.util.Collection;
 import java.util.List;
@@ -14,36 +17,45 @@ public class RedisUtil {
     /**
      * Spring Redis 基础操作模板
      */
-    private static StringRedisTemplate redisTemp;
+    private static RedisTemplate<String, Object> redisTemp;
     /**
      * Redis 数据类型-字符串
      */
-    private static ValueOperations<String, String> valueOps;
-    /**
-     * Redis 数据类型-字典
-     */
-    private static HashOperations<String, String, String> hashOps;
+    private static ValueOperations<String, Object> valueOps;
     /**
      * Redis 数据类型-列表
      */
-    private static ListOperations<String, String> listOps;
+    private static ListOperations<String, Object> listOps;
     /**
      * Redis 数据类型-集合
      */
-    private static SetOperations<String, String> setOps;
+    private static SetOperations<String, Object> setOps;
     /**
      * Redis 数据类型-有序集合
      */
-    private static ZSetOperations<String, String> zSetOps;
+    private static ZSetOperations<String, Object> zSetOps;
+    /**
+     * Redis 数据类型-字典
+     */
+    private static HashOperations<String, String, Object> hashOps;
 
     static {
-        RedisUtil.redisTemp = IocUtil.getBean(StringRedisTemplate.class);
+        // noinspection unchecked
+        RedisUtil.redisTemp = IocUtil.getBean("redisTemplate", RedisTemplate.class);
+        // 设置基础操作模板的序列化类
+        // 使用默认的 ObjectMapper，移除JSON格式化后的 “@Class”节点
+        ObjectMapper objectMapper = new ObjectMapper();
+        redisTemp.setDefaultSerializer(new StringRedisSerializer());
+        redisTemp.setKeySerializer(new StringRedisSerializer());
+        redisTemp.setValueSerializer(new GenericJackson2JsonRedisSerializer(objectMapper));
+        redisTemp.setHashKeySerializer(new StringRedisSerializer());
+        redisTemp.setHashValueSerializer(new GenericJackson2JsonRedisSerializer(objectMapper));
         // 初始化各个数据类型模版
         RedisUtil.valueOps = redisTemp.opsForValue();
-        RedisUtil.hashOps = redisTemp.opsForHash();
         RedisUtil.listOps = redisTemp.opsForList();
         RedisUtil.setOps = redisTemp.opsForSet();
         RedisUtil.zSetOps = redisTemp.opsForZSet();
+        RedisUtil.hashOps = redisTemp.opsForHash();
     }
 
     /**
@@ -52,7 +64,7 @@ public class RedisUtil {
      * @param channel 发布频道
      * @param message 消息内容
      */
-    public static void publish(String channel, String message) {
+    public static void publish(String channel, Object message) {
         redisTemp.convertAndSend(channel, message);
     }
 
@@ -101,7 +113,7 @@ public class RedisUtil {
      * @param key
      * @param value
      */
-    public static void valueSet(String key, String value) {
+    public static void valueSet(String key, Object value) {
         valueOps.set(key, value);
     }
 
@@ -113,7 +125,7 @@ public class RedisUtil {
      * @param timeout 有效时间
      * @param unit    时间单位
      */
-    public static void valueSet(String key, String value, long timeout, TimeUnit unit) {
+    public static void valueSet(String key, Object value, long timeout, TimeUnit unit) {
         valueOps.set(key, value, timeout, unit);
     }
 
@@ -122,7 +134,7 @@ public class RedisUtil {
      *
      * @param map
      */
-    public static void valueMultiSet(Map<String, String> map) {
+    public static void valueMultiSet(Map<String, Object> map) {
         valueOps.multiSet(map);
     }
 
@@ -132,7 +144,7 @@ public class RedisUtil {
      * @param key
      * @return
      */
-    public static String valueGet(String key) {
+    public static Object valueGet(String key) {
         return valueOps.get(key);
     }
 
@@ -142,7 +154,7 @@ public class RedisUtil {
      * @param keys
      * @return
      */
-    public static List<String> valueMultiGet(Collection<String> keys) {
+    public static List<Object> valueMultiGet(Collection<String> keys) {
         return valueOps.multiGet(keys);
     }
 
@@ -153,7 +165,7 @@ public class RedisUtil {
      * @param pattern
      * @return
      */
-    public static List<String> valueMultiGet(String pattern) {
+    public static List<Object> valueMultiGet(String pattern) {
         return valueOps.multiGet(keys(pattern));
     }
 
@@ -164,8 +176,23 @@ public class RedisUtil {
      * @param hashKey
      * @param value
      */
-    public static void hashPut(String key, String hashKey, String value) {
+    public static void hashPut(String key, String hashKey, Object value) {
         hashOps.put(key, hashKey, value);
+    }
+
+    /**
+     * 字典-单个存值，指定有效期
+     *
+     * @param key
+     * @param hashKey
+     * @param value
+     * @param timeout
+     * @param unit
+     */
+    public static void hashPut(String key, String hashKey, Object value, long timeout, TimeUnit unit) {
+        hashOps.put(key, hashKey, value);
+        // 设置缓存键的有效期
+        redisTemp.expire(key, timeout, unit);
     }
 
     /**
@@ -174,8 +201,22 @@ public class RedisUtil {
      * @param key
      * @param map
      */
-    public static void hashPutAll(String key, Map<String, String> map) {
+    public static void hashPutAll(String key, Map<String, Object> map) {
         hashOps.putAll(key, map);
+    }
+
+    /**
+     * 字典-批量存值，指定有效期
+     *
+     * @param key
+     * @param map
+     * @param timeout
+     * @param unit
+     */
+    public static void hashPutAll(String key, Map<String, Object> map, long timeout, TimeUnit unit) {
+        hashOps.putAll(key, map);
+        // 设置缓存键的有效期
+        redisTemp.expire(key, timeout, unit);
     }
 
     /**
@@ -185,7 +226,7 @@ public class RedisUtil {
      * @param hashKey
      * @return
      */
-    public static String hashGet(String key, String hashKey) {
+    public static Object hashGet(String key, String hashKey) {
         return hashOps.get(key, hashKey);
     }
 
@@ -196,7 +237,7 @@ public class RedisUtil {
      * @param hashKeys
      * @return
      */
-    public static List<String> hashMultiGet(String key, Collection<String> hashKeys) {
+    public static List<Object> hashMultiGet(String key, Collection<String> hashKeys) {
         return hashOps.multiGet(key, hashKeys);
     }
 
@@ -206,7 +247,7 @@ public class RedisUtil {
      * @param key
      * @return
      */
-    public static Map<String, String> hashEntries(String key) {
+    public static Map<String, Object> hashEntries(String key) {
         return hashOps.entries(key);
     }
 
@@ -226,7 +267,7 @@ public class RedisUtil {
      * @param key
      * @return
      */
-    public static List<String> hashValues(String key) {
+    public static List<Object> hashValues(String key) {
         return hashOps.values(key);
     }
 
@@ -236,7 +277,7 @@ public class RedisUtil {
      * @param key
      * @param hashKeys
      */
-    public static void hashDelete(String key, String... hashKeys) {
+    public static void hashDelete(String key, Object... hashKeys) {
         hashOps.delete(key, hashKeys);
     }
 
@@ -247,8 +288,24 @@ public class RedisUtil {
      * @param value
      * @return
      */
-    public static Long listLeftPush(String key, String value) {
+    public static Long listLeftPush(String key, Object value) {
         return listOps.leftPush(key, value);
+    }
+
+    /**
+     * 列表-左边单个存值，指定缓存键有效期
+     *
+     * @param key
+     * @param value
+     * @param timeout
+     * @param unit
+     * @return
+     */
+    public static Long listLeftPush(String key, Object value, long timeout, TimeUnit unit) {
+        Long aLong = listOps.leftPush(key, value);
+        // 设置缓存键的有效期
+        redisTemp.expire(key, timeout, unit);
+        return aLong;
     }
 
     /**
@@ -258,8 +315,24 @@ public class RedisUtil {
      * @param values
      * @return
      */
-    public static Long listLeftPushAll(String key, Collection<String> values) {
+    public static Long listLeftPushAll(String key, Collection<Object> values) {
         return listOps.leftPushAll(key, values);
+    }
+
+    /**
+     * 列表-左边批量存值，指定缓存键有效期
+     *
+     * @param key
+     * @param values
+     * @param timeout
+     * @param unit
+     * @return
+     */
+    public static Long listLeftPushAll(String key, Collection<Object> values, long timeout, TimeUnit unit) {
+        Long aLong = listOps.leftPushAll(key, values);
+        // 设置缓存键的有效期
+        redisTemp.expire(key, timeout, unit);
+        return aLong;
     }
 
     /**
@@ -269,8 +342,24 @@ public class RedisUtil {
      * @param value
      * @return
      */
-    public static Long listRightPush(String key, String value) {
+    public static Long listRightPush(String key, Object value) {
         return listOps.rightPush(key, value);
+    }
+
+    /**
+     * 列表-右边单个存值，指定缓存键有效期
+     *
+     * @param key
+     * @param value
+     * @param timeout
+     * @param unit
+     * @return
+     */
+    public static Long listRightPush(String key, Object value, long timeout, TimeUnit unit) {
+        Long aLong = listOps.rightPush(key, value);
+        // 设置缓存键的有效期
+        redisTemp.expire(key, timeout, unit);
+        return aLong;
     }
 
     /**
@@ -280,8 +369,24 @@ public class RedisUtil {
      * @param values
      * @return
      */
-    public static Long listRightPushAll(String key, Collection<String> values) {
+    public static Long listRightPushAll(String key, Collection<Object> values) {
         return listOps.rightPushAll(key, values);
+    }
+
+    /**
+     * 列表-右边批量存值，指定缓存键有效期
+     *
+     * @param key
+     * @param values
+     * @param timeout
+     * @param unit
+     * @return
+     */
+    public static Long listRightPushAll(String key, Collection<Object> values, long timeout, TimeUnit unit) {
+        Long aLong = listOps.rightPushAll(key, values);
+        // 设置缓存键的有效期
+        redisTemp.expire(key, timeout, unit);
+        return aLong;
     }
 
     /**
@@ -291,7 +396,7 @@ public class RedisUtil {
      * @param index
      * @param value
      */
-    public static void listSet(String key, long index, String value) {
+    public static void listSet(String key, long index, Object value) {
         // 先判断是否存在当前下标的元素
         if (listOps.size(key) > index)
             listOps.set(key, index, value);
@@ -303,7 +408,7 @@ public class RedisUtil {
      * @param key
      * @return
      */
-    public static String listLeftPop(String key) {
+    public static Object listLeftPop(String key) {
         return listOps.leftPop(key);
     }
 
@@ -313,7 +418,7 @@ public class RedisUtil {
      * @param key
      * @return
      */
-    public static String listRightPop(String key) {
+    public static Object listRightPop(String key) {
         return listOps.rightPop(key);
     }
 
@@ -324,7 +429,7 @@ public class RedisUtil {
      * @param index
      * @return
      */
-    public static String listIndex(String key, long index) {
+    public static Object listIndex(String key, long index) {
         return listOps.index(key, index);
     }
 
@@ -336,7 +441,7 @@ public class RedisUtil {
      * @param end
      * @return
      */
-    public static List<String> listRange(String key, long start, long end) {
+    public static List<Object> listRange(String key, long start, long end) {
         return listOps.range(key, start, end);
     }
 
@@ -346,7 +451,7 @@ public class RedisUtil {
      * @param key
      * @return
      */
-    public static List<String> listRangeAll(String key) {
+    public static List<Object> listRangeAll(String key) {
         return listOps.range(key, 0, listOps.size(key));
     }
 
@@ -358,7 +463,7 @@ public class RedisUtil {
      * @param value
      * @return
      */
-    public static Long listRemove(String key, long index, String value) {
+    public static Long listRemove(String key, long index, Object value) {
         return listOps.remove(key, index, value);
     }
 
@@ -369,8 +474,35 @@ public class RedisUtil {
      * @param values
      * @return
      */
-    public static Long setAdd(String key, String... values) {
+    public static Long setAdd(String key, Object... values) {
         return setOps.add(key, values);
+    }
+
+    /**
+     * 集合-添加一个或多个元素
+     *
+     * @param key
+     * @param values
+     * @return
+     */
+    public static Long setAdd(String key, Collection<Object> values) {
+        return setOps.add(key, values.toArray());
+    }
+
+    /**
+     * 集合-添加一个或多个元素，指定缓存键有效期
+     *
+     * @param key
+     * @param timeout
+     * @param unit
+     * @param values
+     * @return
+     */
+    public static Long setAdd(String key, Collection<Object> values, long timeout, TimeUnit unit) {
+        Long add = setOps.add(key, values.toArray());
+        // 设置缓存键的有效期
+        redisTemp.expire(key, timeout, unit);
+        return add;
     }
 
     /**
@@ -381,7 +513,7 @@ public class RedisUtil {
      * @param destKey
      * @return
      */
-    public static Boolean setMove(String key, String value, String destKey) {
+    public static Boolean setMove(String key, Object value, String destKey) {
         return setOps.move(key, value, destKey);
     }
 
@@ -392,7 +524,7 @@ public class RedisUtil {
      * @param value
      * @return
      */
-    public static Boolean setIsMember(String key, String value) {
+    public static Boolean setIsMember(String key, Object value) {
         return setOps.isMember(key, value);
     }
 
@@ -402,7 +534,7 @@ public class RedisUtil {
      * @param key
      * @return
      */
-    public static Set<String> setMembers(String key) {
+    public static Set<Object> setMembers(String key) {
         return setOps.members(key);
     }
 
@@ -413,7 +545,7 @@ public class RedisUtil {
      * @param otherKey
      * @return
      */
-    public static Set<String> setIntersect(String key, String otherKey) {
+    public static Set<Object> setIntersect(String key, String otherKey) {
         return setOps.intersect(key, otherKey);
     }
 
@@ -424,7 +556,7 @@ public class RedisUtil {
      * @param otherKey
      * @return
      */
-    public static Set<String> setUnion(String key, String otherKey) {
+    public static Set<Object> setUnion(String key, String otherKey) {
         return setOps.union(key, otherKey);
     }
 
@@ -435,7 +567,7 @@ public class RedisUtil {
      * @param otherKey
      * @return
      */
-    public static Set<String> setDifference(String key, String otherKey) {
+    public static Set<Object> setDifference(String key, String otherKey) {
         return setOps.difference(key, otherKey);
     }
 
@@ -446,7 +578,7 @@ public class RedisUtil {
      * @param values
      * @return
      */
-    public static Long setRemove(String key, String... values) {
+    public static Long setRemove(String key, Object... values) {
         return setOps.remove(key, values);
     }
 
@@ -458,8 +590,25 @@ public class RedisUtil {
      * @param score
      * @return
      */
-    public static Boolean zSetAdd(String key, String value, double score) {
+    public static Boolean zSetAdd(String key, Object value, double score) {
         return zSetOps.add(key, value, score);
+    }
+
+    /**
+     * 有序集合-添加，指定缓存键有效期
+     *
+     * @param key
+     * @param value
+     * @param score
+     * @param timeout
+     * @param unit
+     * @return
+     */
+    public static Boolean zSetAdd(String key, Object value, double score, long timeout, TimeUnit unit) {
+        Boolean add = zSetOps.add(key, value, score);
+        // 设置缓存键的有效期
+        redisTemp.expire(key, timeout, unit);
+        return add;
     }
 
     /**
@@ -470,7 +619,7 @@ public class RedisUtil {
      * @param end
      * @return
      */
-    public static Set<String> zSetRange(String key, long start, long end) {
+    public static Set<Object> zSetRange(String key, long start, long end) {
         return zSetOps.range(key, start, end);
     }
 
@@ -482,7 +631,7 @@ public class RedisUtil {
      * @param end
      * @return
      */
-    public static Set<String> zSetReverseRange(String key, long start, long end) {
+    public static Set<Object> zSetReverseRange(String key, long start, long end) {
         return zSetOps.reverseRange(key, start, end);
     }
 
@@ -494,7 +643,7 @@ public class RedisUtil {
      * @param max
      * @return
      */
-    public static Set<String> zSetRangeByScore(String key, double min, double max) {
+    public static Set<Object> zSetRangeByScore(String key, double min, double max) {
         return zSetOps.rangeByScore(key, min, max);
     }
 
@@ -506,7 +655,7 @@ public class RedisUtil {
      * @param max
      * @return
      */
-    public static Set<String> zSetReverseRangeByScore(String key, double min, double max) {
+    public static Set<Object> zSetReverseRangeByScore(String key, double min, double max) {
         return zSetOps.reverseRangeByScore(key, min, max);
     }
 
@@ -517,7 +666,7 @@ public class RedisUtil {
      * @param value
      * @return
      */
-    public static Long zSetRank(String key, String value) {
+    public static Long zSetRank(String key, Object value) {
         return zSetOps.rank(key, value);
     }
 
@@ -528,7 +677,7 @@ public class RedisUtil {
      * @param value
      * @return
      */
-    public static Long zSetReverseRank(String key, String value) {
+    public static Long zSetReverseRank(String key, Object value) {
         return zSetOps.reverseRank(key, value);
     }
 
@@ -539,7 +688,7 @@ public class RedisUtil {
      * @param value
      * @return
      */
-    public static Double zSetScore(String key, String value) {
+    public static Double zSetScore(String key, Object value) {
         return zSetOps.score(key, value);
     }
 
@@ -550,7 +699,7 @@ public class RedisUtil {
      * @param values
      * @return
      */
-    public static Long zSetRemove(String key, String... values) {
+    public static Long zSetRemove(String key, Object... values) {
         return zSetOps.remove(key, values);
     }
 
