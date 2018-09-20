@@ -15,5 +15,9 @@ public class MouldServerApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(MouldServerApplication.class, args);
+
+        // new SpringApplicationBuilder(StartMain.class)
+        //        .web(WebApplicationType.NONE)
+        //        .run(args);
     }
 }
