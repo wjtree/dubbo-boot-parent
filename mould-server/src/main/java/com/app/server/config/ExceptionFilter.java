@@ -1,4 +1,4 @@
-package com.kyexpress.tos.schedule.config;
+package com.app.server.config;
 
 import com.alibaba.dubbo.rpc.*;
 
