@@ -8,6 +8,7 @@ import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.NameValuePair;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -63,6 +64,8 @@ public class HttpUtil {
      */
     private static PoolingHttpClientConnectionManager cm = null;
 
+    private static RequestConfig requestConfig;
+
     static {
         // 初始化连接池，可用于请求HTTP/HTTPS（信任所有证书）
         cm = new PoolingHttpClientConnectionManager(getRegistry());
@@ -70,6 +73,18 @@ public class HttpUtil {
         cm.setMaxTotal(200);
         // 每路由最大连接数，默认值是2
         cm.setDefaultMaxPerRoute(5);
+
+        // 自定义配置
+//        RequestConfig.Builder configBuilder = RequestConfig.custom();
+//        // 设置连接超时
+//        configBuilder.setConnectTimeout(MAX_TIMEOUT);
+//        // 设置读取超时
+//        configBuilder.setSocketTimeout(MAX_TIMEOUT);
+//        // 设置从连接池获取连接实例的超时
+//        configBuilder.setConnectionRequestTimeout(MAX_TIMEOUT);
+//        // 在提交请求之前 测试连接是否可用
+//        configBuilder.setStaleConnectionCheckEnabled(true);
+//        requestConfig = configBuilder.build();
     }
 
     /**
